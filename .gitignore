@@ -1,0 +1,25 @@
+# Variáveis de ambiente
+.env
+.env.local
+
+# Banco de dados e backups
+*.db
+*.db.bkp_*
+sistema_bkp/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Ambientes virtuais
+venv/
+.venv/
+
+# Logs
+*.log
+log.txt
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,33 @@
+# Ambientes Python locais (Windows)
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Backups antigos do banco
+*.db.bkp_*
+sistema_bkp/
+
+# Logs
+log.txt
+*.log
+
+# Docs
+README*.md
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
