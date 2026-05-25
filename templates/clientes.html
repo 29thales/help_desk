@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes - Help Desk</title>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f6f9;
+}
+
+/* HEADER */
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+header h1 { font-size: 22px; }
+
+header nav { display: flex; gap: 10px; align-items: center; }
+
+header nav a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.15);
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+header nav a:hover { background: rgba(255,255,255,0.25); }
+
+.btn-logout {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+/* CONTAINER */
+.container {
+    max-width: 1100px;
+    margin: 25px auto;
+    padding: 0 20px;
+}
+
+/* CARDS */
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 18px;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+/* FORM GRID */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group { margin-bottom: 5px; }
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* BOTÕES */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #555;
+}
+
+.btn-secondary:hover { background: #d0d0d0; }
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.btn-edit {
+    background: #f39c12;
+    color: white;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.btn-danger:hover { background: #c0392b; }
+.btn-edit:hover { background: #e67e22; }
+
+/* TABELA */
+.table-wrapper { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead { background: #f8f9fa; }
+
+th {
+    padding: 12px 10px;
+    text-align: left;
+    color: #666;
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #444;
+}
+
+tr:hover { background: #f9f9ff; }
+
+.valor-hora {
+    font-weight: 600;
+    color: #27ae60;
+}
+
+.badge-ativo {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-ativo.sim { background: #d4edda; color: #155724; }
+.badge-ativo.nao { background: #f8d7da; color: #721c24; }
+
+.actions { display: flex; gap: 5px; }
+
+/* MENSAGENS */
+.alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    display: none;
+}
+
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* BUSCA */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* EMPTY STATE */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+.empty-state span { font-size: 40px; display: block; margin-bottom: 10px; }
+
+/* EDIÇÃO ATIVA */
+.editing-mode .card h3 { color: #f39c12; }
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 10px; }
+    td, th { padding: 8px 5px; font-size: 12px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>👥 Clientes</h1>
+    <nav>
+        <a href="/dashboard">📊 Dashboard</a>
+        <a href="/clientes/pagina">👥 Clientes</a>
+        <a href="/comissao/pagina" id="linkComissaoAdmin" style="display:none;">💼 Comissões</a>
+        <a href="/usuarios/pagina" id="linkUsuariosAdmin" style="display:none;">👫 Usuários</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+
+    <!-- ALERTAS -->
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError" class="alert alert-error"></div>
+
+    <!-- FORMULÁRIO -->
+    <div class="card" id="cardForm">
+        <h3 id="formTitle">➕ Novo Cliente</h3>
+
+        <form id="formCliente">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input id="nome" placeholder="Nome completo" required>
+                </div>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <input id="empresa" placeholder="Nome da empresa">
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input id="email" type="email" placeholder="email@exemplo.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input id="telefone" placeholder="(00) 00000-0000">
+                </div>
+                <div class="form-group">
+                    <label>CNPJ</label>
+                    <input id="cnpj" placeholder="00.000.000/0000-00">
+                </div>
+                <div class="form-group">
+                    <label>Valor/Hora (R$)</label>
+                    <input id="valor_hora" type="number" step="0.01" placeholder="130.00" value="130.00">
+                </div>
+                <div class="form-group">
+                    <label>Responsável</label>
+                    <input id="responsavel" placeholder="Nome do responsável">
+                </div>
+                <div class="form-group">
+                    <label>Endereço</label>
+                    <input id="endereco" placeholder="Endereço completo">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btnSalvar">✓ Cadastrar Cliente</button>
+                <button type="button" class="btn btn-secondary" id="btnCancelar" style="display:none;" onclick="cancelarEdicao()">✕ Cancelar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- LISTA -->
+    <div class="card">
+        <h3>📋 Lista de Clientes</h3>
+
+        <div class="search-bar">
+            <input type="text" id="busca" placeholder="🔍 Buscar por nome, empresa ou email..." oninput="filtrarClientes()">
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Empresa</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>Valor/Hora</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaClientes">
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <span>📭</span>
+                            Carregando clientes...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+// =================== ESTADO ===================
+let editandoId = null;
+let todosClientes = [];
+
+// =================== TOKEN ===================
+function getToken() {
+    return localStorage.getItem('token') || localStorage.getItem('access_token');
+}
+
+function authHeaders() {
+    return {
+        'Authorization': `Bearer ${getToken()}`,
+        'Content-Type': 'application/json'
+    };
+}
+
+// =================== ALERTAS ===================
+function mostrarSucesso(msg) {
+    const el = document.getElementById('alertSuccess');
+    el.textContent = '✅ ' + msg;
+    el.style.display = 'block';
+    document.getElementById('alertError').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function mostrarErro(msg) {
+    const el = document.getElementById('alertError');
+    el.textContent = '❌ ' + msg;
+    el.style.display = 'block';
+    document.getElementById('alertSuccess').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+// =================== LISTAR ===================
+async function carregarClientes() {
+    const token = getToken();
+    if (!token) { window.location.href = '/'; return; }
+
+    try {
+        const res = await fetch('/api/clientes/', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 401) { logout(); return; }
+
+        if (!res.ok) {
+            mostrarErro('Erro ao carregar clientes');
+            return;
+        }
+
+        todosClientes = await res.json();
+        renderizarTabela(todosClientes);
+
+    } catch (err) {
+        mostrarErro('Erro de conexão: ' + err.message);
+    }
+}
+
+function renderizarTabela(clientes) {
+    const tabela = document.getElementById('tabelaClientes');
+
+    if (clientes.length === 0) {
+        tabela.innerHTML = `
+            <tr><td colspan="7" class="empty-state">
+                <span>📭</span>
+                Nenhum cliente encontrado
+            </td></tr>`;
+        return;
+    }
+
+    tabela.innerHTML = clientes.map(c => `
+        <tr>
+            <td><strong>${c.nome}</strong></td>
+            <td>${c.empresa || '-'}</td>
+            <td>${c.email || '-'}</td>
+            <td>${c.telefone || '-'}</td>
+            <td class="valor-hora">R$ ${(c.valor_hora || 0).toFixed(2)}</td>
+            <td><span class="badge-ativo ${c.ativo !== false ? 'sim' : 'nao'}">${c.ativo !== false ? 'Ativo' : 'Inativo'}</span></td>
+            <td class="actions">
+                <button class="btn btn-edit" onclick="editar(${c.id})">✏️ Editar</button>
+                <button class="btn btn-danger" onclick="deletar(${c.id}, '${c.nome}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// =================== BUSCA ===================
+function filtrarClientes() {
+    const termo = document.getElementById('busca').value.toLowerCase();
+    const filtrados = todosClientes.filter(c =>
+        (c.nome || '').toLowerCase().includes(termo) ||
+        (c.empresa || '').toLowerCase().includes(termo) ||
+        (c.email || '').toLowerCase().includes(termo)
+    );
+    renderizarTabela(filtrados);
+}
+
+// =================== CADASTRAR / ATUALIZAR ===================
+document.getElementById('formCliente').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const cliente = {
+        nome: document.getElementById('nome').value.trim(),
+        empresa: document.getElementById('empresa').value.trim() || null,
+        email: document.getElementById('email').value.trim(),
+        telefone: document.getElementById('telefone').value.trim() || null,
+        cnpj: document.getElementById('cnpj').value.trim() || null,
+        endereco: document.getElementById('endereco').value.trim() || null,
+        responsavel: document.getElementById('responsavel').value.trim() || null,
+        valor_hora: parseFloat(document.getElementById('valor_hora').value) || 130.00
+    };
+
+    if (!cliente.nome || !cliente.email) {
+        mostrarErro('Nome e email são obrigatórios!');
+        return;
+    }
+
+    try {
+        const url = editandoId ? `/api/clientes/${editandoId}` : '/api/clientes/';
+        const method = editandoId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: authHeaders(),
+            body: JSON.stringify(cliente)
+        });
+
+        if (res.ok) {
+            mostrarSucesso(editandoId ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!');
+            cancelarEdicao();
+            carregarClientes(); // Atualização automática da lista
+        } else {
+            const erro = await res.json();
+            mostrarErro(erro.detail || 'Erro ao salvar cliente');
+        }
+
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
+});
+
+// =================== EDITAR ===================
+async function editar(id) {
+    try {
+        const res = await fetch(`/api/clientes/${id}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!res.ok) { mostrarErro('Erro ao buscar cliente'); return; }
+
+        const c = await res.json();
+
+        document.getElementById('nome').value = c.nome || '';
+        document.getElementById('empresa').value = c.empresa || '';
+        document.getElementById('email').value = c.email || '';
+        document.getElementById('telefone').value = c.telefone || '';
+        document.getElementById('cnpj').value = c.cnpj || '';
+        document.getElementById('endereco').value = c.endereco || '';
+        document.getElementById('responsavel').value = c.responsavel || '';
+        document.getElementById('valor_hora').value = c.valor_hora || 130;
+
+        editandoId = id;
+
+        // Visual de edição
+        document.getElementById('formTitle').textContent = '✏️ Editando Cliente: ' + c.nome;
+        document.getElementById('btnSalvar').textContent = '✓ Atualizar Cliente';
+        document.getElementById('btnCancelar').style.display = 'inline-block';
+        document.getElementById('cardForm').classList.add('editing-mode');
+
+        // Scroll para o form
+        document.getElementById('cardForm').scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
+}
+
+function cancelarEdicao() {
+    editandoId = null;
+    document.getElementById('formCliente').reset();
+    document.getElementById('valor_hora').value = '130.00';
+    document.getElementById('formTitle').textContent = '➕ Novo Cliente';
+    document.getElementById('btnSalvar').textContent = '✓ Cadastrar Cliente';
+    document.getElementById('btnCancelar').style.display = 'none';
+    document.getElementById('cardForm').classList.remove('editing-mode');
+}
+
+// =================== DELETAR ===================
+async function deletar(id, nome) {
+    if (!confirm(`Deseja realmente excluir o cliente "${nome}"?`)) return;
+
+    try {
+        const res = await fetch(`/api/clientes/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (res.ok) {
+            mostrarSucesso('Cliente excluído com sucesso!');
+            carregarClientes(); // Atualização automática
+        } else {
+            mostrarErro('Erro ao excluir cliente');
+        }
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
+}
+
+// =================== LOGOUT ===================
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    window.location.href = '/';
+}
+
+// =================== INIT ===================
+document.addEventListener('DOMContentLoaded', () => {
+    if (!getToken()) { window.location.href = '/'; return; }
+    carregarClientes();
+});
+
+// =================== GUARDA ADMIN (redireciona não-admins) ===================
+(async function() {
+    try {
+        const t = localStorage.getItem('token') || localStorage.getItem('access_token');
+        if (!t) { window.location.href = '/'; return; }
+        const r = await fetch('/api/usuario-logado', { headers: { 'Authorization': 'Bearer ' + t } });
+        if (!r.ok) { window.location.href = '/'; return; }
+        const u = await r.json();
+        const ehAdmin = u.is_admin || u.tipo_usuario === 'admin';
+        if (!ehAdmin) {
+            // Técnico → painel; Cliente → portal; outro → login
+            if (u.tipo_usuario === 'tecnico') window.location.href = '/tecnico/painel';
+            else if (u.tipo_usuario === 'cliente') window.location.href = '/cliente/painel';
+            else window.location.href = '/';
+            return;
+        }
+        // É admin — mostra os links admin-only
+        const link = document.getElementById('linkUsuariosAdmin');
+        if (link) link.style.display = '';
+        const linkCom = document.getElementById('linkComissaoAdmin');
+        if (linkCom) linkCom.style.display = '';
+    } catch(e) { window.location.href = '/'; }
+})();
+
+</script>
+
+</body>
+</html>

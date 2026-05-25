@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal do Cliente - Help Desk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; }
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header .titulo { display: flex; flex-direction: column; gap: 2px; }
+header h1 { font-size: 20px; font-weight: 700; }
+header .empresa { font-size: 12px; opacity: 0.9; }
+header nav { display: flex; gap: 10px; align-items: center; }
+header nav .nome-user { font-size: 13px; opacity: 0.9; padding: 0 10px; border-right: 1px solid rgba(255,255,255,0.3); }
+.btn-logout, .btn-senha {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    text-decoration: none;
+}
+.btn-logout:hover, .btn-senha:hover { background: rgba(255,255,255,0.3); }
+
+.container { max-width: 1100px; margin: 20px auto; padding: 0 20px; }
+
+.stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px; margin-bottom: 20px;
+}
+.stat-card {
+    background: white; padding: 20px; border-radius: 10px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-top: 4px solid #ccc;
+}
+.stat-card .num { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+.stat-card .label { font-size: 13px; color: #777; }
+.stat-card.abertos { border-top-color: #3498db; } .stat-card.abertos .num { color: #3498db; }
+.stat-card.atend   { border-top-color: #f39c12; } .stat-card.atend .num { color: #f39c12; }
+.stat-card.final   { border-top-color: #27ae60; } .stat-card.final .num { color: #27ae60; }
+
+.btn-abrir-chamado {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; border: none; border-radius: 10px;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    margin-bottom: 20px; transition: all 0.2s;
+    box-shadow: 0 3px 10px rgba(102,126,234,0.3);
+}
+.btn-abrir-chamado:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+
+.card {
+    background: white; padding: 25px; border-radius: 10px;
+    margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.card h3 {
+    color: #333; margin-bottom: 15px; font-size: 17px;
+    border-bottom: 2px solid #667eea; padding-bottom: 10px;
+}
+
+.table-wrapper { border: 1px solid #e0e0e0; border-radius: 8px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fa; }
+th { padding: 12px 15px; text-align: left; color: #666; font-weight: 600; font-size: 12px; border-bottom: 2px solid #e0e0e0; text-transform: uppercase; }
+td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+tr:hover { background: #f9f9ff; }
+tr:last-child td { border-bottom: none; }
+
+.status {
+    display: inline-block; padding: 4px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+}
+.status-aberto          { background: #d1ecf1; color: #0c5460; }
+.status-atribuido       { background: #fff3cd; color: #856404; }
+.status-em_atendimento  { background: #ffe5cc; color: #8a3a00; }
+.status-finalizado      { background: #d4edda; color: #155724; }
+.status-cancelado       { background: #e0e0e0; color: #555; }
+
+.prio {
+    display: inline-block; padding: 3px 9px; border-radius: 10px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+}
+.prio-baixa   { background: #e8f5e9; color: #2e7d32; }
+.prio-media   { background: #fff9c4; color: #827717; }
+.prio-alta    { background: #ffccbc; color: #bf360c; }
+.prio-urgente { background: #ffcdd2; color: #b71c1c; }
+
+.btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.btn-primary   { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-secondary { background: #e0e0e0; color: #555; }
+.btn-info      { background: #3498db; color: white; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.empty { text-align: center; padding: 40px; color: #999; }
+
+.rodape-info {
+    text-align: center; color: #999; font-size: 12px;
+    padding: 15px; margin-top: 10px;
+}
+
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; display: none; }
+.alert-success { background: #d4edda; color: #155724; }
+.alert-error   { background: #f8d7da; color: #721c24; }
+
+/* Modal */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 12px; width: 90%; max-width: 600px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
+}
+.modal-header {
+    padding: 18px 25px; border-bottom: 2px solid #667eea;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h3 { color: #333; font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+.modal-body { padding: 25px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+.form-group { margin-bottom: 15px; }
+.form-group label { font-size: 12px; color: #666; font-weight: 600; margin-bottom: 5px; display: block; }
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 9px 12px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+}
+.form-group textarea { resize: vertical; min-height: 100px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: #667eea;
+}
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.tipo-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tipo-card {
+    border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+    background: white;
+}
+.tipo-card:hover { border-color: #667eea; background: #f8f9ff; }
+.tipo-card.ativo {
+    border-color: #667eea; background: linear-gradient(135deg, #eef1ff, #f3eaff);
+    box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+}
+.tipo-card .tipo-icone { font-size: 26px; margin-bottom: 4px; }
+.tipo-card .tipo-nome { font-weight: 700; color: #333; font-size: 14px; }
+.tipo-card .tipo-desc { font-size: 11px; color: #888; margin-top: 2px; }
+
+.det-info {
+    background: #f8f9ff; padding: 12px 15px; border-radius: 6px;
+    margin-bottom: 15px; font-size: 13px; border-left: 3px solid #667eea;
+    line-height: 1.7;
+}
+.hist-item {
+    background: #fafafa; padding: 12px; border-radius: 6px;
+    margin-bottom: 8px; border-left: 3px solid #667eea;
+}
+.hist-item .data { font-size: 11px; color: #888; margin-bottom: 4px; }
+.hist-item .desc { font-size: 14px; color: #333; }
+.msg-final {
+    padding: 12px; border-radius: 6px; margin-top: 15px;
+    text-align: center; font-size: 14px; font-weight: 600;
+}
+.msg-final.final { background: #d4edda; color: #155724; }
+.msg-final.cancel { background: #e0e0e0; color: #555; }
+
+@media (max-width: 768px) {
+    header { flex-direction: column; gap: 10px; text-align: center; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <div class="titulo">
+        <h1>🎫 Portal do Cliente</h1>
+        <div class="empresa" id="nomeEmpresa">—</div>
+    </div>
+    <nav>
+        <span class="nome-user" id="nomeUser">—</span>
+        <a href="/trocar-senha" class="btn-senha">🔑 Trocar senha</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError"   class="alert alert-error"></div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card abertos">
+            <div class="num" id="statAbertos">0</div>
+            <div class="label">Aguardando atendimento</div>
+        </div>
+        <div class="stat-card atend">
+            <div class="num" id="statAtend">0</div>
+            <div class="label">Em atendimento</div>
+        </div>
+        <div class="stat-card final">
+            <div class="num" id="statFinal">0</div>
+            <div class="label">Finalizados este mês</div>
+        </div>
+    </div>
+
+    <button class="btn-abrir-chamado" onclick="abrirModalNovo()">➕ Abrir novo chamado</button>
+
+    <div class="card">
+        <h3>📋 Meus Chamados</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nº</th>
+                        <th>Descrição</th>
+                        <th>Abertura</th>
+                        <th>Prio</th>
+                        <th>Status</th>
+                        <th style="width: 100px;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela">
+                    <tr><td colspan="6" class="empty">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="rodape-info">
+        🔒 Você vê apenas os chamados que você abriu. Para dúvidas sobre sua empresa, fale com o administrador.
+    </div>
+</div>
+
+<!-- =========== MODAL NOVO CHAMADO =========== -->
+<div class="modal-overlay" id="modalNovo">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>➕ Abrir novo chamado</h3>
+            <button class="modal-close" onclick="fecharModal('modalNovo')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Tipo de atendimento *</label>
+                <div class="tipo-cards">
+                    <div class="tipo-card ativo" id="tipoCardUser" onclick="selTipo('suporte_usuario')">
+                        <div class="tipo-icone">👤</div>
+                        <div class="tipo-nome">Suporte ao Usuário</div>
+                        <div class="tipo-desc">Atendimento por tempo (dúvidas, problemas pontuais)</div>
+                    </div>
+                    <div class="tipo-card" id="tipoCardTec" onclick="selTipo('suporte_tecnico')">
+                        <div class="tipo-icone">🔧</div>
+                        <div class="tipo-nome">Suporte Técnico</div>
+                        <div class="tipo-desc">Serviço avulso (formatação, troca de peça, instalação)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Título *</label>
+                <input type="text" id="novoTitulo" placeholder="Ex: Impressora não imprime">
+            </div>
+            <div class="form-group">
+                <label>Descrição detalhada *</label>
+                <textarea id="novoDesc" placeholder="Descreva o problema com o máximo de detalhes"></textarea>
+            </div>
+            <div class="row-2">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="novoCat">
+                        <option value="geral">Geral</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="rede">Rede</option>
+                        <option value="email">Email</option>
+                        <option value="impressora">Impressora</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridade</label>
+                    <select id="novoPrio">
+                        <option value="baixa">Baixa</option>
+                        <option value="media" selected>Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalNovo')">Cancelar</button>
+                <button class="btn btn-primary" onclick="criarChamado()">💾 Abrir chamado</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========== MODAL DETALHE =========== -->
+<div class="modal-overlay" id="modalDet">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="detTit">Chamado</h3>
+            <button class="modal-close" onclick="fecharModal('modalDet')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="det-info" id="detInfo">—</div>
+            <h4 style="margin: 15px 0 10px; color: #555; font-size: 14px;">📜 Histórico de atendimento</h4>
+            <div id="histList"><em style="color:#999;">Ainda sem atualizações.</em></div>
+            <div id="msgFinal"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalDet')">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let listaChamados = [];
+let tipoChamadoAtual = 'suporte_usuario';
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+function H() { return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' }; }
+function escapeHTML(s) {
+    return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function mostrarSucesso(m) {
+    const e = document.getElementById('alertSuccess');
+    e.textContent = '✅ ' + m; e.style.display = 'block';
+    setTimeout(() => e.style.display='none', 4000);
+}
+function mostrarErro(m) {
+    const e = document.getElementById('alertError');
+    e.textContent = '❌ ' + m; e.style.display = 'block';
+    setTimeout(() => e.style.display='none', 5000);
+}
+function fmtData(iso) {
+    if (!iso) return '—';
+    try {
+        const d = new Date(iso);
+        return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    } catch { return iso; }
+}
+function fmtDataSimples(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleDateString('pt-BR'); } catch { return iso; }
+}
+
+function statusLabel(s) {
+    return {
+        'aberto': 'Aguardando técnico',
+        'atribuido': 'Aguardando atendimento',
+        'em_atendimento': 'Em atendimento',
+        'finalizado': 'Finalizado',
+        'cancelado': 'Cancelado',
+    }[s] || s;
+}
+
+// =========== GUARDA ACESSO ===========
+async function guardaAcesso() {
+    const tok = getToken();
+    if (!tok) { window.location.href = '/'; return false; }
+    try {
+        const r = await fetch('/api/usuario-logado', { headers: H() });
+        if (!r.ok) { window.location.href = '/'; return false; }
+        const u = await r.json();
+        if (u.tipo_usuario !== 'cliente') {
+            // Não-cliente nessa tela: redireciona
+            if (u.is_admin || u.tipo_usuario === 'admin') window.location.href = '/dashboard';
+            else if (u.tipo_usuario === 'tecnico') window.location.href = '/tecnico/painel';
+            else window.location.href = '/';
+            return false;
+        }
+        if (u.precisa_trocar_senha) {
+            window.location.href = '/trocar-senha';
+            return false;
+        }
+        document.getElementById('nomeUser').textContent = '👤 ' + u.nome;
+        return true;
+    } catch(e) { window.location.href = '/'; return false; }
+}
+
+// =========== CARREGAR ===========
+async function carregar() {
+    if (!(await guardaAcesso())) return;
+    try {
+        const [rResumo, rChamados] = await Promise.all([
+            fetch('/api/cliente/resumo', { headers: H() }),
+            fetch('/api/cliente/chamados', { headers: H() }),
+        ]);
+
+        if (rResumo.ok) {
+            const r = await rResumo.json();
+            document.getElementById('nomeEmpresa').textContent = r.nome_empresa || 'Minha Empresa';
+            document.getElementById('statAbertos').textContent = r.abertos || 0;
+            document.getElementById('statAtend').textContent = r.em_atendimento || 0;
+            document.getElementById('statFinal').textContent = r.finalizados_mes || 0;
+        }
+
+        listaChamados = rChamados.ok ? await rChamados.json() : [];
+        renderizar();
+    } catch(e) { mostrarErro('Erro ao carregar: ' + e.message); }
+}
+
+function renderizar() {
+    const tbody = document.getElementById('tabela');
+    if (!listaChamados.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Você ainda não abriu nenhum chamado.<br>Clique em "➕ Abrir novo chamado" para começar.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = listaChamados.map(c => `
+        <tr>
+            <td><strong>${escapeHTML(c.numero)}</strong></td>
+            <td>${escapeHTML(c.titulo)}</td>
+            <td style="font-size:12px; color:#666;">${fmtData(c.data_abertura)}</td>
+            <td><span class="prio prio-${c.prioridade}">${c.prioridade}</span></td>
+            <td><span class="status status-${c.status}">${statusLabel(c.status)}</span></td>
+            <td><button class="btn btn-info btn-sm" onclick="abrirDetalhe(${c.id})">👁️ Ver</button></td>
+        </tr>
+    `).join('');
+}
+
+// =========== NOVO ===========
+function selTipo(tipo) {
+    tipoChamadoAtual = tipo;
+    document.getElementById('tipoCardUser').classList.toggle('ativo', tipo === 'suporte_usuario');
+    document.getElementById('tipoCardTec').classList.toggle('ativo', tipo === 'suporte_tecnico');
+}
+
+function abrirModalNovo() {
+    tipoChamadoAtual = 'suporte_usuario';
+    selTipo('suporte_usuario');
+    document.getElementById('novoTitulo').value = '';
+    document.getElementById('novoDesc').value = '';
+    document.getElementById('novoCat').value = 'geral';
+    document.getElementById('novoPrio').value = 'media';
+    document.getElementById('modalNovo').classList.add('active');
+}
+
+async function criarChamado() {
+    const titulo = document.getElementById('novoTitulo').value.trim();
+    const descricao = document.getElementById('novoDesc').value.trim();
+    if (titulo.length < 3) { mostrarErro('Título precisa ter pelo menos 3 caracteres'); return; }
+    if (descricao.length < 5) { mostrarErro('Descrição precisa ter pelo menos 5 caracteres'); return; }
+
+    try {
+        const r = await fetch('/api/cliente/chamado', {
+            method: 'POST', headers: H(),
+            body: JSON.stringify({
+                titulo, descricao,
+                categoria: document.getElementById('novoCat').value,
+                prioridade: document.getElementById('novoPrio').value,
+                tipo_servico: tipoChamadoAtual,
+            })
+        });
+        if (r.ok) {
+            const c = await r.json();
+            mostrarSucesso(`Chamado ${c.numero} aberto! Um técnico vai atender em breve.`);
+            fecharModal('modalNovo');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro ao abrir chamado');
+        }
+    } catch(err) { mostrarErro(err.message); }
+}
+
+// =========== DETALHE ===========
+async function abrirDetalhe(id) {
+    try {
+        const r = await fetch(`/api/cliente/chamados/${id}`, { headers: H() });
+        if (!r.ok) { mostrarErro('Erro ao carregar'); return; }
+        const c = await r.json();
+
+        document.getElementById('detTit').textContent = `${c.numero} — ${c.titulo}`;
+        document.getElementById('detInfo').innerHTML = `
+            <strong>Status:</strong> <span class="status status-${c.status}">${statusLabel(c.status)}</span><br>
+            <strong>Prioridade:</strong> <span class="prio prio-${c.prioridade}">${c.prioridade}</span>
+            &nbsp; <strong>Categoria:</strong> ${escapeHTML(c.categoria || 'geral')}<br>
+            <strong>Descrição:</strong><br>
+            <div style="background:white; padding:10px; border-radius:4px; margin-top:4px;">${escapeHTML(c.descricao)}</div>
+            <strong>Aberto em:</strong> ${fmtData(c.data_abertura)}
+            ${c.data_termino ? `<br><strong>Finalizado em:</strong> ${fmtData(c.data_termino)}` : ''}
+        `;
+
+        const histEl = document.getElementById('histList');
+        const hs = c.historico || [];
+        if (!hs.length) {
+            histEl.innerHTML = '<em style="color:#999;">Ainda sem atualizações do técnico.</em>';
+        } else {
+            histEl.innerHTML = hs.map(h => `
+                <div class="hist-item">
+                    <div class="data">📅 ${fmtDataSimples(h.data)}</div>
+                    <div class="desc">${escapeHTML(h.descricao)}</div>
+                </div>
+            `).join('');
+        }
+
+        const msgFinal = document.getElementById('msgFinal');
+        if (c.status === 'finalizado') {
+            msgFinal.innerHTML = `<div class="msg-final final">✅ Este chamado foi finalizado em ${fmtData(c.data_termino)}</div>`;
+        } else if (c.status === 'cancelado') {
+            msgFinal.innerHTML = `<div class="msg-final cancel">🚫 Este chamado foi cancelado.</div>`;
+        } else {
+            msgFinal.innerHTML = '';
+        }
+
+        document.getElementById('modalDet').classList.add('active');
+    } catch(e) { mostrarErro(e.message); }
+}
+
+// =========== HELPERS ===========
+function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    window.location.href = '/';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') {
+    ['modalNovo', 'modalDet'].forEach(fecharModal);
+}});
+['modalNovo', 'modalDet'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+        if (e.target === e.currentTarget) fecharModal(id);
+    });
+});
+
+document.addEventListener('DOMContentLoaded', carregar);
+</script>
+</body>
+</html>

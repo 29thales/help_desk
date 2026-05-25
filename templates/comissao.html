@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comissões - Help Desk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; }
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 22px; }
+header nav { display: flex; gap: 10px; align-items: center; }
+header nav a {
+    color: white; text-decoration: none; padding: 8px 14px;
+    border-radius: 6px; background: rgba(255,255,255,0.15);
+    font-size: 14px; transition: background 0.3s;
+}
+header nav a:hover { background: rgba(255,255,255,0.25); }
+.btn-logout {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+.card {
+    background: white; padding: 25px; border-radius: 10px;
+    margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.card h3 {
+    color: #333; margin-bottom: 15px; font-size: 17px;
+    border-bottom: 2px solid #667eea; padding-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.filtros { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filtros select, .filtros input {
+    padding: 9px 12px; border: 2px solid #e0e0e0; border-radius: 6px;
+    font-size: 14px; font-family: inherit;
+}
+.filtros select:focus, .filtros input:focus { outline: none; border-color: #667eea; }
+
+.badge-fechado {
+    display: inline-block; padding: 5px 12px; border-radius: 12px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+}
+.badge-fechado.sim { background: #d4edda; color: #155724; }
+.badge-fechado.nao { background: #fff3cd; color: #856404; }
+
+.stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px; margin-bottom: 20px;
+}
+.stat-card {
+    background: white; padding: 20px; border-radius: 10px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-top: 4px solid #ccc;
+}
+.stat-card .num { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.stat-card .label { font-size: 12px; color: #777; }
+.stat-card.total    { border-top-color: #667eea; } .stat-card.total .num    { color: #667eea; }
+.stat-card.chamados { border-top-color: #3498db; } .stat-card.chamados .num { color: #3498db; }
+.stat-card.base     { border-top-color: #f39c12; } .stat-card.base .num     { color: #f39c12; }
+.stat-card.comissao { border-top-color: #27ae60; } .stat-card.comissao .num { color: #27ae60; font-size: 28px; }
+
+.btn {
+    padding: 9px 16px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.2s; text-decoration: none;
+    display: inline-block;
+}
+.btn-primary  { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-success  { background: #27ae60; color: white; }
+.btn-danger   { background: #e74c3c; color: white; }
+.btn-secondary{ background: #e0e0e0; color: #555; }
+.btn-info     { background: #3498db; color: white; }
+.btn-warning  { background: #f39c12; color: white; }
+.btn:hover { transform: translateY(-1px); }
+.btn-sm { padding: 6px 11px; font-size: 12px; }
+
+.table-wrapper { border: 1px solid #e0e0e0; border-radius: 8px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fa; }
+th { padding: 12px 15px; text-align: left; color: #666; font-weight: 600; font-size: 12px; border-bottom: 2px solid #e0e0e0; text-transform: uppercase; }
+td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+tr:last-child td { border-bottom: none; }
+
+.perc-input {
+    width: 80px; padding: 6px 8px; border: 2px solid #f39c12;
+    border-radius: 5px; font-size: 14px; font-weight: 600; text-align: right;
+    background: #fff9e6;
+}
+.perc-input:focus { outline: none; border-color: #e67e22; }
+.perc-input:disabled { background: #f4f6f9; color: #999; border-color: #ddd; }
+
+.valor-destaque { font-weight: 700; color: #27ae60; font-size: 15px; }
+.empty { text-align: center; padding: 40px; color: #999; }
+
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; display: none; }
+.alert-success { background: #d4edda; color: #155724; }
+.alert-error   { background: #f8d7da; color: #721c24; }
+.alert-info    { background: #d1ecf1; color: #0c5460; }
+
+.aviso-fechado {
+    background: #d4edda; padding: 12px 15px; border-left: 4px solid #27ae60;
+    border-radius: 6px; margin-bottom: 15px; font-size: 14px; color: #155724;
+}
+.aviso-preview {
+    background: #fff3cd; padding: 12px 15px; border-left: 4px solid #f39c12;
+    border-radius: 6px; margin-bottom: 15px; font-size: 14px; color: #856404;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 12px; width: 90%; max-width: 900px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
+}
+.modal-header {
+    padding: 18px 25px; border-bottom: 2px solid #667eea;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h3 { color: #333; font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+.modal-body { padding: 25px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+.total-pagar {
+    padding: 15px 20px; background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-radius: 10px; margin: 15px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 16px; color: #155724;
+}
+.total-pagar .valor { font-size: 24px; font-weight: 700; }
+
+.acoes-fechado { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 768px) {
+    header { flex-direction: column; gap: 10px; text-align: center; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>💼 Comissões dos Técnicos</h1>
+    <nav>
+        <a href="/dashboard">📊 Dashboard</a>
+        <a href="/clientes/pagina">👥 Clientes</a>
+        <a href="/chamados/pagina">🎫 Chamados</a>
+        <a href="/faturamento/pagina">💰 Faturamento</a>
+        <a href="/servicos/pagina">🔧 Serviços</a>
+        <a href="/usuarios/pagina">👫 Usuários</a>
+        <a href="/comissao/pagina" style="background: rgba(255,255,255,0.3);">💼 Comissões</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError" class="alert alert-error"></div>
+
+    <div class="card">
+        <h3>
+            <span>📅 Período</span>
+            <span id="statusBadge"></span>
+        </h3>
+        <div class="filtros">
+            <label>Ano:</label>
+            <select id="selAno"></select>
+            <label>Mês:</label>
+            <select id="selMes">
+                <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+                <option value="3">Março</option><option value="4">Abril</option>
+                <option value="5">Maio</option><option value="6">Junho</option>
+                <option value="7">Julho</option><option value="8">Agosto</option>
+                <option value="9">Setembro</option><option value="10">Outubro</option>
+                <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="carregar()">🔄 Carregar</button>
+        </div>
+    </div>
+
+    <div id="avisoArea"></div>
+
+    <div class="stats-grid">
+        <div class="stat-card chamados"><div class="num" id="statCham">0</div><div class="label">Chamados no mês</div></div>
+        <div class="stat-card total"><div class="num" id="statTecs">0</div><div class="label">Técnicos envolvidos</div></div>
+        <div class="stat-card base"><div class="num" id="statBase">R$ 0,00</div><div class="label">Base de cálculo</div></div>
+        <div class="stat-card comissao"><div class="num" id="statCom">R$ 0,00</div><div class="label">Comissão total</div></div>
+    </div>
+
+    <div class="card">
+        <h3>
+            <span>👥 Técnicos e comissões</span>
+            <div class="acoes-fechado" id="acoesBar"></div>
+        </h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Técnico</th>
+                        <th style="width:80px;">% Padrão</th>
+                        <th style="width:120px;">% Aplicar</th>
+                        <th style="width:80px;">Chamados</th>
+                        <th>Base</th>
+                        <th>Comissão</th>
+                        <th style="width:160px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela">
+                    <tr><td colspan="7" class="empty">Selecione um período e clique em Carregar.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="total-pagar" id="boxTotalPagar" style="display:none;">
+            <div>💰 Total a pagar aos técnicos:</div>
+            <div class="valor" id="totalPagarValor">R$ 0,00</div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL DETALHES DO TÉCNICO ========== -->
+<div class="modal-overlay" id="modalDet">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="detTit">Detalhe</h3>
+            <button class="modal-close" onclick="fecharModal('modalDet')">&times;</button>
+        </div>
+        <div class="modal-body" id="detBody">Carregando...</div>
+    </div>
+</div>
+
+<!-- ========== MODAL CONFIRMAR FECHAMENTO ========== -->
+<div class="modal-overlay" id="modalConfirmar">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>💾 Fechar mês</h3>
+            <button class="modal-close" onclick="fecharModal('modalConfirmar')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="aviso-preview">
+                ⚠️ Após fechar, os valores ficam fixos. Para alterar você vai precisar reabrir o mês.
+            </div>
+            <p id="confirmarTexto">—</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalConfirmar')">Cancelar</button>
+                <button class="btn btn-success" onclick="confirmarFechamento()">💾 Confirmar fechamento</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL REABRIR ========== -->
+<div class="modal-overlay" id="modalReabrir">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>🔓 Reabrir mês</h3>
+            <button class="modal-close" onclick="fecharModal('modalReabrir')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-error" style="display:block;">
+                ⚠️ <b>Atenção:</b> reabrir o mês apaga os valores fechados. Você vai precisar recalcular e fechar de novo.
+            </div>
+            <p id="reabrirTexto">—</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalReabrir')">Cancelar</button>
+                <button class="btn btn-danger" onclick="confirmarReabertura()">🔓 Confirmar reabertura</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let dadosAtuais = null;
+let percEditados = {}; // {tecnico_id: percentual_temp}
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+function H() { return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' }; }
+
+function escapeHTML(s) {
+    return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function fmtMoeda(v) {
+    const n = Number(v || 0);
+    return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function fmtPct(v) { return (Number(v || 0)).toFixed(1).replace('.', ',') + '%'; }
+function mostrarSucesso(m) {
+    const e = document.getElementById('alertSuccess');
+    e.textContent = '✅ ' + m; e.style.display = 'block';
+    setTimeout(() => e.style.display='none', 4000);
+}
+function mostrarErro(m) {
+    const e = document.getElementById('alertError');
+    e.textContent = '❌ ' + m; e.style.display = 'block';
+    setTimeout(() => e.style.display='none', 6000);
+}
+
+// =========== GUARDA ACESSO ===========
+async function guardaAcesso() {
+    const tok = getToken();
+    if (!tok) { window.location.href = '/'; return false; }
+    try {
+        const r = await fetch('/api/usuario-logado', { headers: H() });
+        if (!r.ok) { window.location.href = '/'; return false; }
+        const u = await r.json();
+        const ehAdmin = u.is_admin || u.tipo_usuario === 'admin';
+        if (!ehAdmin) {
+            if (u.tipo_usuario === 'tecnico') window.location.href = '/tecnico/painel';
+            else if (u.tipo_usuario === 'cliente') window.location.href = '/cliente/painel';
+            else window.location.href = '/';
+            return false;
+        }
+        return true;
+    } catch(e) { window.location.href = '/'; return false; }
+}
+
+// =========== INIT ===========
+function popularAnos() {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const sel = document.getElementById('selAno');
+    for (let a = ano + 1; a >= 2024; a--) {
+        const opt = document.createElement('option');
+        opt.value = a; opt.textContent = a;
+        if (a === ano) opt.selected = true;
+        sel.appendChild(opt);
+    }
+    document.getElementById('selMes').value = hoje.getMonth() + 1;
+}
+
+async function carregar() {
+    percEditados = {};
+    const ano = parseInt(document.getElementById('selAno').value);
+    const mes = parseInt(document.getElementById('selMes').value);
+    try {
+        const r = await fetch(`/api/comissao/previa?ano=${ano}&mes=${mes}`, { headers: H() });
+        if (!r.ok) { mostrarErro('Erro ao carregar'); return; }
+        dadosAtuais = await r.json();
+        render();
+    } catch(e) { mostrarErro(e.message); }
+}
+
+function render() {
+    const d = dadosAtuais;
+    if (!d) return;
+
+    // Badge status
+    const badge = document.getElementById('statusBadge');
+    if (d.fechado) {
+        const dt = d.fechado_em ? new Date(d.fechado_em).toLocaleDateString('pt-BR') : '';
+        badge.innerHTML = `<span class="badge-fechado sim">✅ Fechado${dt ? ' em '+dt : ''}</span>`;
+    } else {
+        badge.innerHTML = `<span class="badge-fechado nao">📝 Em edição</span>`;
+    }
+
+    // Aviso
+    const aviso = document.getElementById('avisoArea');
+    if (d.fechado) {
+        aviso.innerHTML = `<div class="aviso-fechado">✅ Este mês já foi fechado. Os valores abaixo são os salvos. Para editar, reabra o mês.</div>`;
+    } else {
+        aviso.innerHTML = `<div class="aviso-preview">📝 Este mês ainda não foi fechado. Você pode editar os percentuais antes de fechar.</div>`;
+    }
+
+    // Stats
+    document.getElementById('statCham').textContent = d.total_chamados;
+    document.getElementById('statTecs').textContent = d.tecnicos.length;
+    document.getElementById('statBase').textContent = fmtMoeda(d.total_valor_base);
+    document.getElementById('statCom').textContent = fmtMoeda(d.total_comissao);
+
+    // Tabela
+    const tbody = document.getElementById('tabela');
+    if (!d.tecnicos.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum chamado finalizado neste mês.</td></tr>';
+        document.getElementById('boxTotalPagar').style.display = 'none';
+    } else {
+        tbody.innerHTML = d.tecnicos.map(t => {
+            const inputDisabled = d.fechado ? 'disabled' : '';
+            return `
+            <tr>
+                <td><strong>${escapeHTML(t.nome)}</strong>${!t.ativo ? ' <span style="color:#c00; font-size:11px;">(inativo)</span>' : ''}<br>
+                    <span style="font-size:11px; color:#888;">${escapeHTML(t.email)}</span></td>
+                <td>${fmtPct(t.percentual_padrao)}</td>
+                <td>
+                    <input type="number" class="perc-input" min="0" max="100" step="0.1"
+                           value="${t.percentual_aplicado}" ${inputDisabled}
+                           onchange="atualizarPerc(${t.tecnico_id}, this.value)">
+                </td>
+                <td>${t.quantidade_chamados}</td>
+                <td>${fmtMoeda(t.valor_base_comissao)}</td>
+                <td><span class="valor-destaque" id="com_${t.tecnico_id}">${fmtMoeda(t.valor_comissao)}</span></td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="verDetalhes(${t.tecnico_id})">👁️</button>
+                    ${d.fechado ? `<a class="btn btn-secondary btn-sm" href="/api/comissao/pdf/${t.tecnico_id}?ano=${d.ano}&mes=${d.mes}&token=${encodeURIComponent(getToken())}" onclick="baixarPdf(event, ${t.tecnico_id})">📄 PDF</a>` : ''}
+                </td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('boxTotalPagar').style.display = '';
+        atualizarTotalBox();
+    }
+
+    // Ações do card
+    const acoes = document.getElementById('acoesBar');
+    if (d.fechado) {
+        acoes.innerHTML = `
+            <button class="btn btn-primary btn-sm" onclick="baixarPdfConsolidado()">📄 PDF Consolidado</button>
+            <button class="btn btn-danger btn-sm" onclick="pedirReabertura()">🔓 Reabrir mês</button>
+        `;
+    } else if (d.tecnicos.length) {
+        acoes.innerHTML = `
+            <button class="btn btn-success btn-sm" onclick="pedirFechamento()">💾 Fechar mês</button>
+        `;
+    } else {
+        acoes.innerHTML = '';
+    }
+}
+
+function atualizarPerc(tid, valor) {
+    const v = parseFloat(valor);
+    if (isNaN(v) || v < 0 || v > 100) {
+        mostrarErro('Percentual inválido. Use 0 a 100.');
+        return;
+    }
+    percEditados[tid] = v;
+
+    // Recalcula comissão do técnico em tempo real
+    const tec = dadosAtuais.tecnicos.find(t => t.tecnico_id === tid);
+    if (tec) {
+        const nova = Math.round(tec.valor_base_comissao * v) / 100;
+        document.getElementById('com_' + tid).textContent = fmtMoeda(nova);
+        atualizarTotalBox();
+    }
+}
+
+function atualizarTotalBox() {
+    let total = 0;
+    dadosAtuais.tecnicos.forEach(t => {
+        const p = (t.tecnico_id in percEditados) ? percEditados[t.tecnico_id] : t.percentual_aplicado;
+        total += t.valor_base_comissao * p / 100;
+    });
+    document.getElementById('totalPagarValor').textContent = fmtMoeda(total);
+}
+
+// =========== DETALHES ===========
+function verDetalhes(tid) {
+    const tec = dadosAtuais.tecnicos.find(t => t.tecnico_id === tid);
+    if (!tec) return;
+    const percAtual = (tid in percEditados) ? percEditados[tid] : tec.percentual_aplicado;
+
+    document.getElementById('detTit').textContent = `Detalhes — ${tec.nome}`;
+    const rows = tec.chamados.map(ch => {
+        const comReal = Math.round(ch.parte * percAtual) / 100;
+        return `
+        <tr>
+            <td><strong>${ch.numero}</strong></td>
+            <td>${escapeHTML(ch.cliente_nome || '—')}</td>
+            <td>${escapeHTML(ch.servico_nome || (ch.tipo_servico === 'suporte_tecnico' ? 'Técnico' : 'Tempo'))}</td>
+            <td style="text-align:right;">${fmtMoeda(ch.valor_total)}</td>
+            <td style="text-align:right;">${(ch.peso * 100).toFixed(1).replace('.', ',')}%</td>
+            <td style="text-align:right;">${fmtMoeda(ch.parte)}</td>
+            <td style="text-align:right; color:#27ae60; font-weight:700;">${fmtMoeda(comReal)}</td>
+        </tr>`;
+    }).join('');
+    document.getElementById('detBody').innerHTML = `
+        <p style="margin-bottom:15px;">
+            <strong>Email:</strong> ${escapeHTML(tec.email)}<br>
+            <strong>% padrão:</strong> ${fmtPct(tec.percentual_padrao)}
+            &nbsp;<strong>% aplicado:</strong> ${fmtPct(percAtual)}
+        </p>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr>
+                    <th>Nº</th><th>Cliente</th><th>Serviço</th>
+                    <th style="text-align:right;">Valor total</th>
+                    <th style="text-align:right;">Peso</th>
+                    <th style="text-align:right;">Sua parte</th>
+                    <th style="text-align:right;">Comissão</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+    `;
+    document.getElementById('modalDet').classList.add('active');
+}
+
+// =========== FECHAR / REABRIR ===========
+function pedirFechamento() {
+    let total = 0;
+    dadosAtuais.tecnicos.forEach(t => {
+        const p = (t.tecnico_id in percEditados) ? percEditados[t.tecnico_id] : t.percentual_aplicado;
+        total += t.valor_base_comissao * p / 100;
+    });
+    document.getElementById('confirmarTexto').innerHTML =
+        `Fechar <b>${nomeMes(dadosAtuais.mes)} de ${dadosAtuais.ano}</b>?<br><br>
+         Total a pagar: <b style="color:#27ae60;">${fmtMoeda(total)}</b><br>
+         Técnicos: <b>${dadosAtuais.tecnicos.length}</b>`;
+    document.getElementById('modalConfirmar').classList.add('active');
+}
+
+async function confirmarFechamento() {
+    const percs = {};
+    dadosAtuais.tecnicos.forEach(t => {
+        percs[String(t.tecnico_id)] = (t.tecnico_id in percEditados) ? percEditados[t.tecnico_id] : t.percentual_aplicado;
+    });
+    try {
+        const r = await fetch('/api/comissao/fechar', {
+            method: 'POST', headers: H(),
+            body: JSON.stringify({ ano: dadosAtuais.ano, mes: dadosAtuais.mes, percentuais: percs })
+        });
+        if (r.ok) {
+            mostrarSucesso('Mês fechado!');
+            fecharModal('modalConfirmar');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro ao fechar');
+        }
+    } catch(e) { mostrarErro(e.message); }
+}
+
+function pedirReabertura() {
+    document.getElementById('reabrirTexto').innerHTML =
+        `Reabrir <b>${nomeMes(dadosAtuais.mes)} de ${dadosAtuais.ano}</b>? Os valores fechados serão removidos.`;
+    document.getElementById('modalReabrir').classList.add('active');
+}
+
+async function confirmarReabertura() {
+    try {
+        const r = await fetch(`/api/comissao/fechamento?ano=${dadosAtuais.ano}&mes=${dadosAtuais.mes}`, {
+            method: 'DELETE', headers: H()
+        });
+        if (r.ok) {
+            mostrarSucesso('Mês reaberto!');
+            fecharModal('modalReabrir');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro ao reabrir');
+        }
+    } catch(e) { mostrarErro(e.message); }
+}
+
+// =========== PDF ===========
+// Links de PDF precisam do token, mas Response direto não serve o token.
+// Solução: fetch com Authorization e abrir o blob.
+async function baixarPdf(evt, tecnicoId) {
+    evt.preventDefault();
+    try {
+        const r = await fetch(`/api/comissao/pdf/${tecnicoId}?ano=${dadosAtuais.ano}&mes=${dadosAtuais.mes}`, { headers: H() });
+        if (!r.ok) { mostrarErro('Erro ao gerar PDF'); return; }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `comissao_${dadosAtuais.ano}_${String(dadosAtuais.mes).padStart(2,'0')}_tec_${tecnicoId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch(e) { mostrarErro(e.message); }
+}
+
+async function baixarPdfConsolidado() {
+    try {
+        const r = await fetch(`/api/comissao/pdf?ano=${dadosAtuais.ano}&mes=${dadosAtuais.mes}`, { headers: H() });
+        if (!r.ok) { mostrarErro('Erro ao gerar PDF'); return; }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `comissao_${dadosAtuais.ano}_${String(dadosAtuais.mes).padStart(2,'0')}_consolidado.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch(e) { mostrarErro(e.message); }
+}
+
+// =========== HELPERS ===========
+function nomeMes(m) {
+    return ['','janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][m] || m;
+}
+function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    window.location.href = '/';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') {
+    ['modalDet','modalConfirmar','modalReabrir'].forEach(fecharModal);
+}});
+['modalDet','modalConfirmar','modalReabrir'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+        if (e.target === e.currentTarget) fecharModal(id);
+    });
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!(await guardaAcesso())) return;
+    popularAnos();
+    carregar();
+});
+</script>
+</body>
+</html>

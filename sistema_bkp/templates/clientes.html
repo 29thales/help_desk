@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Clientes</title>
+
+<style>
+body {
+    font-family: 'Segoe UI';
+    background: #f4f6f9;
+    margin: 0;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #5a6ce0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.actions button {
+    margin-right: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h2>👥 Clientes</h2>
+    <button onclick="logout()">Sair</button>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Novo Cliente</h3>
+
+<form id="formCliente">
+    <input id="nome" placeholder="Nome" required>
+    <input id="empresa" placeholder="Empresa">
+    <input id="email" placeholder="Email">
+    <input id="telefone" placeholder="Telefone">
+    <input id="valor_hora" type="number" placeholder="Valor hora (R$)">
+    <button type="submit">Salvar</button>
+</form>
+</div>
+
+<div class="card">
+<h3>Lista de Clientes</h3>
+
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>Empresa</th>
+<th>Email</th>
+<th>Valor/Hora</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="tabelaClientes"></tbody>
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let editandoId = null;
+
+// ================= TOKEN
+function getToken() {
+    return localStorage.getItem("access_token");
+}
+
+// ================= LISTAR
+async function carregarClientes() {
+    const res = await fetch('/api/clientes/listar', {
+        headers: {
+            'Authorization': `Bearer ${getToken()}`
+        }
+    });
+
+    if (res.status === 401) {
+        logout();
+        return;
+    }
+
+    const data = await res.json();
+
+    const tabela = document.getElementById('tabelaClientes');
+    tabela.innerHTML = '';
+
+    data.forEach(c => {
+        tabela.innerHTML += `
+        <tr>
+            <td>${c.nome}</td>
+            <td>${c.empresa || ''}</td>
+            <td>${c.email || ''}</td>
+            <td>R$ ${c.valor_hora || 0}</td>
+            <td class="actions">
+                <button onclick="editar(${c.id})">✏️</button>
+                <button onclick="deletar(${c.id})">🗑️</button>
+            </td>
+        </tr>
+        `;
+    });
+}
+
+// ================= CADASTRAR / EDITAR
+document.getElementById('formCliente').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const cliente = {
+        nome: nome.value,
+        empresa: empresa.value,
+        email: email.value,
+        telefone: telefone.value,
+        valor_hora: parseFloat(valor_hora.value) || 0
+    };
+
+    const url = editandoId 
+        ? `/api/clientes/${editandoId}`
+        : `/api/clientes/criar`;
+
+    const method = editandoId ? 'PUT' : 'POST';
+
+    await fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(cliente)
+    });
+
+    alert(editandoId ? "Atualizado!" : "Cadastrado!");
+
+    editandoId = null;
+    formCliente.reset();
+
+    carregarClientes();
+});
+
+// ================= EDITAR
+async function editar(id) {
+    const res = await fetch(`/api/clientes/${id}`, {
+        headers: {
+            'Authorization': `Bearer ${getToken()}`
+        }
+    });
+
+    const c = await res.json();
+
+    nome.value = c.nome;
+    empresa.value = c.empresa;
+    email.value = c.email;
+    telefone.value = c.telefone;
+    valor_hora.value = c.valor_hora;
+
+    editandoId = id;
+}
+
+// ================= DELETAR
+async function deletar(id) {
+    if (!confirm("Deseja excluir?")) return;
+
+    await fetch(`/api/clientes/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${getToken()}`
+        }
+    });
+
+    carregarClientes();
+}
+
+// ================= LOGOUT
+function logout() {
+    localStorage.removeItem("access_token");
+    window.location.href = "/";
+}
+
+// ================= INIT
+carregarClientes();
+
+</script>
+
+</body>
+</html>

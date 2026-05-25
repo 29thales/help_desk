@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serviços Técnicos - Help Desk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; }
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 22px; }
+header nav { display: flex; gap: 10px; align-items: center; }
+header nav a {
+    color: white; text-decoration: none; padding: 8px 14px;
+    border-radius: 6px; background: rgba(255,255,255,0.15);
+    font-size: 14px; transition: background 0.3s;
+}
+header nav a:hover { background: rgba(255,255,255,0.25); }
+.btn-logout {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+.card {
+    background: white; padding: 25px; border-radius: 10px;
+    margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.card h3 {
+    color: #333; margin-bottom: 20px; font-size: 18px;
+    border-bottom: 2px solid #667eea; padding-bottom: 10px;
+}
+
+.topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+}
+.topbar input[type="text"] {
+    flex: 1; min-width: 250px; padding: 10px 14px;
+    border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;
+}
+.topbar input[type="text"]:focus { outline: none; border-color: #667eea; }
+
+.filtros { display: flex; gap: 8px; align-items: center; }
+.filtro-btn {
+    padding: 8px 14px; border: 2px solid #e0e0e0; background: white;
+    border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+    color: #666; transition: all 0.2s;
+}
+.filtro-btn.active { border-color: #667eea; background: #f0f4ff; color: #667eea; }
+
+.btn {
+    padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.3s;
+}
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+.btn-success { background: #27ae60; color: white; }
+.btn-warning { background: #f39c12; color: white; }
+.btn-danger { background: #e74c3c; color: white; }
+.btn-secondary { background: #e0e0e0; color: #555; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.table-wrapper {
+    border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;
+    overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fa; }
+th {
+    padding: 12px 15px; text-align: left; color: #666; font-weight: 600;
+    font-size: 12px; border-bottom: 2px solid #e0e0e0; text-transform: uppercase;
+}
+td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+tr:hover { background: #f9f9ff; }
+tr:last-child td { border-bottom: none; }
+
+.cat-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    color: white;
+}
+.cat-manutencao { background: #3498db; }
+.cat-hardware { background: #e67e22; }
+.cat-software { background: #9b59b6; }
+.cat-rede { background: #27ae60; }
+.cat-dados { background: #16a085; }
+.cat-outros { background: #7f8c8d; }
+
+.status-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700;
+}
+.status-ativo { background: #d4edda; color: #155724; }
+.status-rascunho { background: #fff3cd; color: #856404; }
+
+.valor-padrao { font-weight: 700; color: #27ae60; }
+.valor-zero { color: #999; font-style: italic; font-weight: normal; }
+
+.form-novo {
+    background: #f8f9ff; padding: 20px; border-radius: 10px;
+    margin-top: 20px; border: 1px dashed #667eea;
+}
+.form-novo h4 { color: #667eea; margin-bottom: 15px; font-size: 15px; }
+.form-grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;
+}
+.form-group label {
+    font-size: 12px; color: #666; font-weight: 600;
+    margin-bottom: 5px; display: block;
+}
+.form-group input, .form-group select {
+    width: 100%; padding: 9px 12px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; display: none; }
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.empty { text-align: center; padding: 40px; color: #999; }
+
+/* Modal de edição */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 12px; width: 90%; max-width: 550px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.modal-header {
+    padding: 18px 25px; border-bottom: 2px solid #667eea;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h3 { color: #333; font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+.modal-body { padding: 25px; }
+.modal-body .form-edicao { display: grid; grid-template-columns: 1fr; gap: 15px; }
+.modal-body .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+.stats-top {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+}
+.stat-card {
+    background: white; padding: 15px; border-radius: 10px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.stat-card .num { font-size: 26px; font-weight: 700; }
+.stat-card .label { font-size: 12px; color: #888; margin-top: 2px; }
+.stat-card.total .num { color: #667eea; }
+.stat-card.ativos .num { color: #27ae60; }
+.stat-card.rascunho .num { color: #f39c12; }
+
+@media (max-width: 768px) {
+    header { flex-direction: column; gap: 10px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .topbar { flex-direction: column; align-items: stretch; }
+    .modal-body .row-2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🔧 Serviços Técnicos</h1>
+    <nav>
+        <a href="/dashboard">📊 Dashboard</a>
+        <a href="/clientes/pagina">👥 Clientes</a>
+        <a href="/chamados/pagina">🎫 Chamados</a>
+        <a href="/faturamento/pagina">💰 Faturamento</a>
+        <a href="/servicos/pagina">🔧 Serviços</a>
+        <a href="/comissao/pagina" id="linkComissaoAdmin" style="display:none;">💼 Comissões</a>
+        <a href="/usuarios/pagina" id="linkUsuariosAdmin" style="display:none;">👫 Usuários</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError" class="alert alert-error"></div>
+
+    <div class="stats-top">
+        <div class="stat-card total"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
+        <div class="stat-card ativos"><div class="num" id="statAtivos">0</div><div class="label">Ativos</div></div>
+        <div class="stat-card rascunho"><div class="num" id="statRascunho">0</div><div class="label">Rascunho</div></div>
+    </div>
+
+    <div class="card">
+        <h3>📦 Catálogo de Serviços Técnicos</h3>
+
+        <div class="topbar">
+            <input type="text" id="busca" placeholder="🔍 Buscar por nome ou categoria..." oninput="renderizarTabela()">
+            <div class="filtros">
+                <button class="filtro-btn active" data-filtro="todos" onclick="setFiltro('todos')">Todos</button>
+                <button class="filtro-btn" data-filtro="ativos" onclick="setFiltro('ativos')">✅ Ativos</button>
+                <button class="filtro-btn" data-filtro="rascunho" onclick="setFiltro('rascunho')">⚠️ Rascunho</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome do Serviço</th>
+                        <th>Categoria</th>
+                        <th>Valor Padrão</th>
+                        <th>Chamados</th>
+                        <th>Status</th>
+                        <th style="width: 220px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaServicos">
+                    <tr><td colspan="6" class="empty">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-novo">
+            <h4>➕ Cadastrar novo serviço</h4>
+            <form id="formNovo">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome do serviço *</label>
+                        <input type="text" id="novoNome" placeholder="Ex: Recuperação de dados" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="novaCategoria">
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software">Software</option>
+                            <option value="Rede">Rede</option>
+                            <option value="Dados">Dados</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor padrão (R$)</label>
+                        <input type="number" id="novoValor" placeholder="0.00" step="0.01" min="0" value="0">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="height: 41px;">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE EDIÇÃO -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>✏️ Editar Serviço</h3>
+            <button class="modal-close" onclick="fecharModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-edicao">
+                <div class="form-group">
+                    <label>Nome do serviço *</label>
+                    <input type="text" id="editNome" required>
+                </div>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="editCategoria">
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software">Software</option>
+                            <option value="Rede">Rede</option>
+                            <option value="Dados">Dados</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor padrão (R$)</label>
+                        <input type="number" id="editValor" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="editAtivo" style="width:18px; height:18px;">
+                        <span>Serviço ativo (aparece no combobox de abertura)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarEdicao()">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let todosServicos = [];
+let filtroAtual = 'todos';
+let editandoId = null;
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+function authHeaders() { return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' }; }
+
+function mostrarSucesso(msg) {
+    const el = document.getElementById('alertSuccess');
+    el.textContent = '✅ ' + msg; el.style.display = 'block';
+    document.getElementById('alertError').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 3000);
+}
+function mostrarErro(msg) {
+    const el = document.getElementById('alertError');
+    el.textContent = '❌ ' + msg; el.style.display = 'block';
+    document.getElementById('alertSuccess').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function formatarMoeda(v) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+}
+
+function escapeHTML(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+}
+
+function badgeCategoria(cat) {
+    const mapa = {
+        'Manutenção': 'cat-manutencao',
+        'Hardware': 'cat-hardware',
+        'Software': 'cat-software',
+        'Rede': 'cat-rede',
+        'Dados': 'cat-dados',
+    };
+    return mapa[cat] || 'cat-outros';
+}
+
+async function carregar() {
+    if (!getToken()) { window.location.href = '/'; return; }
+    try {
+        const res = await fetch('/api/servicos/?admin=true&incluir_inativos=true', {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (res.status === 401) { logout(); return; }
+        if (res.status === 403) {
+            mostrarErro('Acesso restrito a administradores');
+            document.getElementById('tabelaServicos').innerHTML = '<tr><td colspan="6" class="empty">Acesso negado</td></tr>';
+            return;
+        }
+        if (!res.ok) { mostrarErro('Erro ao carregar serviços'); return; }
+        todosServicos = await res.json();
+        atualizarStats();
+        renderizarTabela();
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
+}
+
+function atualizarStats() {
+    const total = todosServicos.length;
+    const ativos = todosServicos.filter(s => s.ativo).length;
+    const rascunho = total - ativos;
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statAtivos').textContent = ativos;
+    document.getElementById('statRascunho').textContent = rascunho;
+}
+
+function setFiltro(f) {
+    filtroAtual = f;
+    document.querySelectorAll('.filtro-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.filtro === f);
+    });
+    renderizarTabela();
+}
+
+function renderizarTabela() {
+    const busca = (document.getElementById('busca').value || '').toLowerCase().trim();
+
+    let lista = todosServicos.filter(s => {
+        if (filtroAtual === 'ativos' && !s.ativo) return false;
+        if (filtroAtual === 'rascunho' && s.ativo) return false;
+        if (busca) {
+            const texto = `${s.nome} ${s.categoria}`.toLowerCase();
+            if (!texto.includes(busca)) return false;
+        }
+        return true;
+    });
+
+    const tbody = document.getElementById('tabelaServicos');
+
+    if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum serviço encontrado.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = lista.map(s => {
+        const statusBadge = s.ativo
+            ? '<span class="status-badge status-ativo">✅ Ativo</span>'
+            : '<span class="status-badge status-rascunho">⚠️ Rascunho</span>';
+
+        const valorCell = s.valor_padrao > 0
+            ? `<span class="valor-padrao">${formatarMoeda(s.valor_padrao)}</span>`
+            : '<span class="valor-zero">A definir</span>';
+
+        const btnAtivar = !s.ativo
+            ? `<button class="btn btn-success btn-sm" onclick="ativarServico(${s.id})">✅ Ativar</button>`
+            : '';
+
+        return `
+            <tr>
+                <td><strong>${escapeHTML(s.nome)}</strong></td>
+                <td><span class="cat-badge ${badgeCategoria(s.categoria)}">${escapeHTML(s.categoria)}</span></td>
+                <td>${valorCell}</td>
+                <td>${s.chamados_count || 0}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    ${btnAtivar}
+                    <button class="btn btn-warning btn-sm" onclick="abrirEdicao(${s.id})">✏️ Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletarServico(${s.id})">🗑️</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// =================== CRIAR ===================
+document.getElementById('formNovo').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('novoNome').value.trim();
+    const categoria = document.getElementById('novaCategoria').value;
+    const valor = parseFloat(document.getElementById('novoValor').value) || 0;
+
+    if (!nome || nome.length < 2) { mostrarErro('Nome do serviço é obrigatório (mínimo 2 caracteres)'); return; }
+
+    try {
+        const res = await fetch('/api/servicos/', {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ nome, categoria, valor_padrao: valor, ativo: true })
+        });
+        if (res.ok) {
+            mostrarSucesso('Serviço cadastrado!');
+            document.getElementById('formNovo').reset();
+            carregar();
+        } else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao cadastrar');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+});
+
+// =================== EDITAR ===================
+function abrirEdicao(id) {
+    const s = todosServicos.find(x => x.id === id);
+    if (!s) return;
+    editandoId = id;
+    document.getElementById('editNome').value = s.nome;
+    document.getElementById('editCategoria').value = s.categoria;
+    document.getElementById('editValor').value = s.valor_padrao;
+    document.getElementById('editAtivo').checked = s.ativo;
+    document.getElementById('modalEditar').classList.add('active');
+}
+
+function fecharModal() {
+    document.getElementById('modalEditar').classList.remove('active');
+    editandoId = null;
+}
+
+async function salvarEdicao() {
+    if (!editandoId) return;
+    const payload = {
+        nome: document.getElementById('editNome').value.trim(),
+        categoria: document.getElementById('editCategoria').value,
+        valor_padrao: parseFloat(document.getElementById('editValor').value) || 0,
+        ativo: document.getElementById('editAtivo').checked,
+    };
+    if (!payload.nome || payload.nome.length < 2) { mostrarErro('Nome inválido'); return; }
+
+    try {
+        const res = await fetch(`/api/servicos/${editandoId}`, {
+            method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            mostrarSucesso('Serviço atualizado!');
+            fecharModal();
+            carregar();
+        } else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao salvar');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// =================== ATIVAR RÁPIDO ===================
+async function ativarServico(id) {
+    try {
+        const res = await fetch(`/api/servicos/${id}`, {
+            method: 'PUT', headers: authHeaders(),
+            body: JSON.stringify({ ativo: true })
+        });
+        if (res.ok) { mostrarSucesso('Serviço ativado!'); carregar(); }
+        else { const e = await res.json(); mostrarErro(e.detail || 'Erro'); }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// =================== DELETAR ===================
+async function deletarServico(id) {
+    const s = todosServicos.find(x => x.id === id);
+    if (!s) return;
+    if (!confirm(`Remover o serviço "${s.nome}"?`)) return;
+
+    try {
+        const res = await fetch(`/api/servicos/${id}`, {
+            method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (res.ok) { mostrarSucesso('Serviço removido!'); carregar(); }
+        else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao remover');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    window.location.href = '/';
+}
+
+// Fecha modal com ESC
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
+document.getElementById('modalEditar').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) fecharModal();
+});
+
+document.addEventListener('DOMContentLoaded', carregar);
+
+// =================== GUARDA ADMIN (redireciona não-admins) ===================
+(async function() {
+    try {
+        const t = localStorage.getItem('token') || localStorage.getItem('access_token');
+        if (!t) { window.location.href = '/'; return; }
+        const r = await fetch('/api/usuario-logado', { headers: { 'Authorization': 'Bearer ' + t } });
+        if (!r.ok) { window.location.href = '/'; return; }
+        const u = await r.json();
+        const ehAdmin = u.is_admin || u.tipo_usuario === 'admin';
+        if (!ehAdmin) {
+            // Técnico → painel; Cliente → portal; outro → login
+            if (u.tipo_usuario === 'tecnico') window.location.href = '/tecnico/painel';
+            else if (u.tipo_usuario === 'cliente') window.location.href = '/cliente/painel';
+            else window.location.href = '/';
+            return;
+        }
+        // É admin — mostra os links admin-only
+        const link = document.getElementById('linkUsuariosAdmin');
+        if (link) link.style.display = '';
+        const linkCom = document.getElementById('linkComissaoAdmin');
+        if (linkCom) linkCom.style.display = '';
+    } catch(e) { window.location.href = '/'; }
+})();
+</script>
+</body>
+</html>

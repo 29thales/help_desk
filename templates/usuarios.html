@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usuários - Help Desk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; }
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 22px; }
+header nav { display: flex; gap: 10px; align-items: center; }
+header nav a {
+    color: white; text-decoration: none; padding: 8px 14px;
+    border-radius: 6px; background: rgba(255,255,255,0.15);
+    font-size: 14px; transition: background 0.3s;
+}
+header nav a:hover { background: rgba(255,255,255,0.25); }
+.btn-logout {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+.card {
+    background: white; padding: 25px; border-radius: 10px;
+    margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.card h3 {
+    color: #333; margin-bottom: 20px; font-size: 18px;
+    border-bottom: 2px solid #667eea; padding-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+}
+.topbar input[type="text"] {
+    flex: 1; min-width: 250px; padding: 10px 14px;
+    border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;
+}
+.topbar input[type="text"]:focus { outline: none; border-color: #667eea; }
+.topbar select {
+    padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px;
+    font-size: 14px; background: white; cursor: pointer;
+}
+.topbar select:focus { outline: none; border-color: #667eea; }
+
+.btn {
+    padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.3s;
+}
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+.btn-success { background: #27ae60; color: white; }
+.btn-warning { background: #f39c12; color: white; }
+.btn-danger { background: #e74c3c; color: white; }
+.btn-secondary { background: #e0e0e0; color: #555; }
+.btn-info { background: #3498db; color: white; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.table-wrapper {
+    border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;
+    overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fa; }
+th {
+    padding: 12px 15px; text-align: left; color: #666; font-weight: 600;
+    font-size: 12px; border-bottom: 2px solid #e0e0e0; text-transform: uppercase;
+}
+td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+tr:hover { background: #f9f9ff; }
+tr:last-child td { border-bottom: none; }
+
+.tipo-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; color: white;
+}
+.tipo-admin { background: #764ba2; }
+.tipo-tecnico { background: #3498db; }
+.tipo-cliente { background: #27ae60; }
+
+.status-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700;
+}
+.status-ativo { background: #d4edda; color: #155724; }
+.status-inativo { background: #f8d7da; color: #721c24; }
+
+.config-info {
+    font-size: 12px; color: #666; line-height: 1.5;
+}
+.config-info strong { color: #333; }
+.config-vazio { color: #aaa; font-style: italic; font-size: 12px; }
+
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; display: none; }
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.empty { text-align: center; padding: 40px; color: #999; }
+
+/* Modal */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 12px; width: 90%; max-width: 600px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
+}
+.modal-header {
+    padding: 18px 25px; border-bottom: 2px solid #667eea;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h3 { color: #333; font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+.modal-body { padding: 25px; }
+.form-edicao { display: grid; grid-template-columns: 1fr; gap: 15px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+.form-group label {
+    font-size: 12px; color: #666; font-weight: 600;
+    margin-bottom: 5px; display: block;
+}
+.form-group input, .form-group select {
+    width: 100%; padding: 9px 12px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+
+.checkbox-row {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 10px; background: #f8f9ff; border-radius: 6px;
+}
+.checkbox-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+.help-text { font-size: 11px; color: #888; margin-top: 4px; }
+
+.stats-top {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+}
+.stat-card {
+    background: white; padding: 15px; border-radius: 10px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.stat-card .num { font-size: 26px; font-weight: 700; }
+.stat-card .label { font-size: 12px; color: #888; margin-top: 2px; }
+.stat-card.total .num { color: #667eea; }
+.stat-card.admins .num { color: #764ba2; }
+.stat-card.tecnicos .num { color: #3498db; }
+.stat-card.clientes .num { color: #27ae60; }
+
+/* Campos condicionais */
+.campos-tipo { display: none; padding: 15px; background: #f8f9ff; border-radius: 8px; border: 1px dashed #c5cee0; }
+.campos-tipo.active { display: block; }
+
+@media (max-width: 768px) {
+    header { flex-direction: column; gap: 10px; }
+    .topbar { flex-direction: column; align-items: stretch; }
+    .row-2 { grid-template-columns: 1fr; }
+    .stats-top { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>👥 Usuários</h1>
+    <nav>
+        <a href="/dashboard">📊 Dashboard</a>
+        <a href="/clientes/pagina">👥 Clientes</a>
+        <a href="/chamados/pagina">🎫 Chamados</a>
+        <a href="/faturamento/pagina">💰 Faturamento</a>
+        <a href="/servicos/pagina">🔧 Serviços</a>
+        <a href="/comissao/pagina">💼 Comissões</a>
+        <a href="/usuarios/pagina">👫 Usuários</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError" class="alert alert-error"></div>
+
+    <div class="stats-top">
+        <div class="stat-card total"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
+        <div class="stat-card admins"><div class="num" id="statAdmins">0</div><div class="label">Admins</div></div>
+        <div class="stat-card tecnicos"><div class="num" id="statTecnicos">0</div><div class="label">Técnicos</div></div>
+        <div class="stat-card clientes"><div class="num" id="statClientes">0</div><div class="label">Clientes</div></div>
+    </div>
+
+    <div class="card">
+        <h3>
+            <span>👫 Gerenciamento de Usuários</span>
+            <button class="btn btn-primary" onclick="abrirModalNovo()">➕ Novo Usuário</button>
+        </h3>
+
+        <div class="topbar">
+            <input type="text" id="busca" placeholder="🔍 Buscar por nome ou email..." oninput="renderizar()">
+            <select id="filtroTipo" onchange="renderizar()">
+                <option value="todos">Todos os tipos</option>
+                <option value="admin">Admins</option>
+                <option value="tecnico">Técnicos</option>
+                <option value="cliente">Clientes</option>
+            </select>
+            <select id="filtroStatus" onchange="renderizar()">
+                <option value="todos">Todos status</option>
+                <option value="ativo">✅ Ativos</option>
+                <option value="inativo">⛔ Inativos</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Tipo</th>
+                        <th>Configuração</th>
+                        <th>Status</th>
+                        <th style="width: 280px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaUsuarios">
+                    <tr><td colspan="6" class="empty">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ====== MODAL: NOVO USUÁRIO ====== -->
+<div class="modal-overlay" id="modalNovo">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>➕ Novo Usuário</h3>
+            <button class="modal-close" onclick="fecharModal('modalNovo')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-edicao">
+                <div class="form-group">
+                    <label>Tipo de usuário *</label>
+                    <select id="novoTipo" onchange="atualizarCamposCondicionais()">
+                        <option value="">— Selecione —</option>
+                        <option value="admin">👑 Admin (acesso total)</option>
+                        <option value="tecnico">🔧 Técnico (atende chamados)</option>
+                        <option value="cliente">🏢 Cliente (abre chamados)</option>
+                    </select>
+                </div>
+
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Nome completo *</label>
+                        <input type="text" id="novoNome" placeholder="Ex: João da Silva">
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="novoEmail" placeholder="usuario@empresa.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Senha inicial *</label>
+                    <input type="text" id="novoSenha" placeholder="Mínimo 6 caracteres">
+                    <div class="help-text">O usuário poderá alterar depois pelo perfil dele</div>
+                </div>
+
+                <!-- Campos condicionais: TÉCNICO -->
+                <div class="campos-tipo" id="camposTecnico">
+                    <h4 style="margin-bottom: 12px; color: #3498db;">⚙️ Configuração de técnico</h4>
+                    <div class="row-2">
+                        <div class="form-group">
+                            <label>Comissão padrão (%)</label>
+                            <input type="number" id="novoComissao" min="0" max="100" step="0.1" value="0">
+                            <div class="help-text">Editável no fechamento mensal</div>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:end;">
+                            <label class="checkbox-row" style="width:100%;">
+                                <input type="checkbox" id="novoVerFila" checked>
+                                <span>Pode ver fila aberta</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos condicionais: CLIENTE -->
+                <div class="campos-tipo" id="camposCliente">
+                    <h4 style="margin-bottom: 12px; color: #27ae60;">🏢 Vínculo com empresa</h4>
+                    <div class="form-group">
+                        <label>Empresa do cliente *</label>
+                        <select id="novoClienteId">
+                            <option value="">— Selecione a empresa —</option>
+                        </select>
+                        <div class="help-text">A empresa precisa estar cadastrada em Clientes</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalNovo')">Cancelar</button>
+                <button class="btn btn-primary" onclick="criarUsuario()">💾 Criar usuário</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====== MODAL: EDITAR USUÁRIO ====== -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>✏️ Editar Usuário</h3>
+            <button class="modal-close" onclick="fecharModal('modalEditar')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-edicao">
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Nome *</label>
+                        <input type="text" id="editNome">
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="editEmail">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <input type="text" id="editTipoLabel" disabled style="background:#f4f6f9;">
+                    <div class="help-text">Não é possível alterar o tipo de um usuário existente</div>
+                </div>
+
+                <div class="campos-tipo" id="editCamposTecnico">
+                    <h4 style="margin-bottom: 12px; color: #3498db;">⚙️ Configuração de técnico</h4>
+                    <div class="row-2">
+                        <div class="form-group">
+                            <label>Comissão (%)</label>
+                            <input type="number" id="editComissao" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:end;">
+                            <label class="checkbox-row" style="width:100%;">
+                                <input type="checkbox" id="editVerFila">
+                                <span>Pode ver fila aberta</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="campos-tipo" id="editCamposCliente">
+                    <h4 style="margin-bottom: 12px; color: #27ae60;">🏢 Vínculo com empresa</h4>
+                    <div class="form-group">
+                        <label>Empresa do cliente</label>
+                        <select id="editClienteId">
+                            <option value="">— Selecione —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" id="editAtivo">
+                    <span><strong>Usuário ativo</strong> (desmarque para desativar acesso)</span>
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalEditar')">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarEdicao()">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====== MODAL: RESETAR SENHA ====== -->
+<div class="modal-overlay" id="modalSenha">
+    <div class="modal" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3>🔑 Resetar Senha</h3>
+            <button class="modal-close" onclick="fecharModal('modalSenha')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom:15px; color:#555;">
+                Definindo nova senha para: <strong id="senhaUsuarioLabel">—</strong>
+            </p>
+            <div class="form-group">
+                <label>Nova senha *</label>
+                <input type="text" id="novaSenha" placeholder="Mínimo 6 caracteres">
+                <div class="help-text">Anote e passe ao usuário. Ele poderá alterar depois.</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalSenha')">Cancelar</button>
+                <button class="btn btn-warning" onclick="confirmarResetSenha()">🔑 Confirmar reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let todosUsuarios = [];
+let todosClientes = [];
+let editandoId = null;
+let resetandoId = null;
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+function authHeaders() { return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' }; }
+
+function mostrarSucesso(msg) {
+    const el = document.getElementById('alertSuccess');
+    el.textContent = '✅ ' + msg; el.style.display = 'block';
+    document.getElementById('alertError').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 3000);
+}
+function mostrarErro(msg) {
+    const el = document.getElementById('alertError');
+    el.textContent = '❌ ' + msg; el.style.display = 'block';
+    document.getElementById('alertSuccess').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function escapeHTML(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+}
+
+function badgeTipo(tipo) {
+    const mapa = {
+        'admin': '<span class="tipo-badge tipo-admin">👑 Admin</span>',
+        'tecnico': '<span class="tipo-badge tipo-tecnico">🔧 Técnico</span>',
+        'cliente': '<span class="tipo-badge tipo-cliente">🏢 Cliente</span>',
+    };
+    return mapa[tipo] || `<span class="tipo-badge" style="background:#7f8c8d;">${escapeHTML(tipo)}</span>`;
+}
+
+function configCelula(u) {
+    if (u.tipo_usuario === 'tecnico') {
+        const fila = u.pode_ver_fila_aberta ? '✅ vê fila' : '⛔ só atribuídos';
+        return `<div class="config-info">
+            <strong>${(u.comissao_percentual || 0).toFixed(1)}%</strong> comissão<br>
+            ${fila}
+        </div>`;
+    }
+    if (u.tipo_usuario === 'cliente') {
+        if (u.nome_cliente_vinculado) {
+            return `<div class="config-info">🏢 ${escapeHTML(u.nome_cliente_vinculado)}</div>`;
+        }
+        return `<div class="config-vazio">⚠️ sem empresa vinculada</div>`;
+    }
+    return `<div class="config-vazio">—</div>`;
+}
+
+// ========== CARREGAR ==========
+async function carregar() {
+    if (!getToken()) { window.location.href = '/'; return; }
+
+    // Carrega clientes em paralelo (pra select de empresa)
+    try {
+        const [resU, resC] = await Promise.all([
+            fetch('/api/usuarios/', { headers: authHeaders() }),
+            fetch('/api/clientes/', { headers: authHeaders() }),
+        ]);
+
+        if (resU.status === 401) { logout(); return; }
+        if (resU.status === 403) {
+            mostrarErro('Acesso restrito a administradores');
+            document.getElementById('tabelaUsuarios').innerHTML =
+                '<tr><td colspan="6" class="empty">⛔ Acesso negado</td></tr>';
+            return;
+        }
+        if (!resU.ok) { mostrarErro('Erro ao carregar usuários'); return; }
+
+        todosUsuarios = await resU.json();
+        todosClientes = resC.ok ? await resC.json() : [];
+
+        atualizarStats();
+        popularSelectsClientes();
+        renderizar();
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
+}
+
+function atualizarStats() {
+    document.getElementById('statTotal').textContent = todosUsuarios.length;
+    document.getElementById('statAdmins').textContent =
+        todosUsuarios.filter(u => u.tipo_usuario === 'admin').length;
+    document.getElementById('statTecnicos').textContent =
+        todosUsuarios.filter(u => u.tipo_usuario === 'tecnico').length;
+    document.getElementById('statClientes').textContent =
+        todosUsuarios.filter(u => u.tipo_usuario === 'cliente').length;
+}
+
+function popularSelectsClientes() {
+    const opts = '<option value="">— Selecione a empresa —</option>' +
+        todosClientes.map(c => {
+            const nome = c.empresa || c.nome;
+            return `<option value="${c.id}">${escapeHTML(nome)}</option>`;
+        }).join('');
+    document.getElementById('novoClienteId').innerHTML = opts;
+    document.getElementById('editClienteId').innerHTML = opts;
+}
+
+function renderizar() {
+    const busca = (document.getElementById('busca').value || '').toLowerCase().trim();
+    const filtroTipo = document.getElementById('filtroTipo').value;
+    const filtroStatus = document.getElementById('filtroStatus').value;
+
+    let lista = todosUsuarios.filter(u => {
+        if (filtroTipo !== 'todos' && u.tipo_usuario !== filtroTipo) return false;
+        if (filtroStatus === 'ativo' && !u.ativo) return false;
+        if (filtroStatus === 'inativo' && u.ativo) return false;
+        if (busca) {
+            const texto = `${u.nome} ${u.email}`.toLowerCase();
+            if (!texto.includes(busca)) return false;
+        }
+        return true;
+    });
+
+    const tbody = document.getElementById('tabelaUsuarios');
+
+    if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum usuário encontrado.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = lista.map(u => {
+        const statusBadge = u.ativo
+            ? '<span class="status-badge status-ativo">✅ Ativo</span>'
+            : '<span class="status-badge status-inativo">⛔ Inativo</span>';
+
+        const btnToggle = u.ativo
+            ? `<button class="btn btn-secondary btn-sm" onclick="desativar(${u.id})" title="Desativar">⛔</button>`
+            : `<button class="btn btn-success btn-sm" onclick="ativar(${u.id})" title="Ativar">✅</button>`;
+
+        return `
+            <tr>
+                <td><strong>${escapeHTML(u.nome)}</strong></td>
+                <td>${escapeHTML(u.email)}</td>
+                <td>${badgeTipo(u.tipo_usuario)}</td>
+                <td>${configCelula(u)}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" onclick="abrirEdicao(${u.id})" title="Editar">✏️</button>
+                    <button class="btn btn-info btn-sm" onclick="abrirResetSenha(${u.id})" title="Resetar senha">🔑</button>
+                    ${btnToggle}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// ========== NOVO ==========
+function abrirModalNovo() {
+    document.getElementById('novoTipo').value = '';
+    document.getElementById('novoNome').value = '';
+    document.getElementById('novoEmail').value = '';
+    document.getElementById('novoSenha').value = '';
+    document.getElementById('novoComissao').value = '0';
+    document.getElementById('novoVerFila').checked = true;
+    document.getElementById('novoClienteId').value = '';
+    atualizarCamposCondicionais();
+    document.getElementById('modalNovo').classList.add('active');
+}
+
+function atualizarCamposCondicionais() {
+    const tipo = document.getElementById('novoTipo').value;
+    document.getElementById('camposTecnico').classList.toggle('active', tipo === 'tecnico');
+    document.getElementById('camposCliente').classList.toggle('active', tipo === 'cliente');
+}
+
+async function criarUsuario() {
+    const tipo = document.getElementById('novoTipo').value;
+    const nome = document.getElementById('novoNome').value.trim();
+    const email = document.getElementById('novoEmail').value.trim();
+    const senha = document.getElementById('novoSenha').value;
+
+    if (!tipo) { mostrarErro('Selecione o tipo de usuário'); return; }
+    if (!nome || nome.length < 2) { mostrarErro('Nome inválido (mínimo 2 caracteres)'); return; }
+    if (!email) { mostrarErro('Email é obrigatório'); return; }
+    if (!senha || senha.length < 6) { mostrarErro('Senha deve ter no mínimo 6 caracteres'); return; }
+
+    const payload = { tipo_usuario: tipo, nome, email, senha };
+
+    if (tipo === 'tecnico') {
+        const com = parseFloat(document.getElementById('novoComissao').value) || 0;
+        if (com < 0 || com > 100) { mostrarErro('Comissão deve estar entre 0 e 100'); return; }
+        payload.comissao_percentual = com;
+        payload.pode_ver_fila_aberta = document.getElementById('novoVerFila').checked;
+    }
+
+    if (tipo === 'cliente') {
+        const cid = document.getElementById('novoClienteId').value;
+        if (!cid) { mostrarErro('Selecione a empresa do cliente'); return; }
+        payload.cliente_id = parseInt(cid, 10);
+    }
+
+    try {
+        const res = await fetch('/api/usuarios/', {
+            method: 'POST', headers: authHeaders(), body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            mostrarSucesso('Usuário criado!');
+            fecharModal('modalNovo');
+            carregar();
+        } else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao criar usuário');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// ========== EDITAR ==========
+function abrirEdicao(id) {
+    const u = todosUsuarios.find(x => x.id === id);
+    if (!u) return;
+    editandoId = id;
+
+    document.getElementById('editNome').value = u.nome;
+    document.getElementById('editEmail').value = u.email;
+    document.getElementById('editTipoLabel').value =
+        u.tipo_usuario === 'admin' ? 'Admin' :
+        u.tipo_usuario === 'tecnico' ? 'Técnico' : 'Cliente';
+    document.getElementById('editAtivo').checked = u.ativo;
+
+    document.getElementById('editCamposTecnico').classList.toggle('active', u.tipo_usuario === 'tecnico');
+    document.getElementById('editCamposCliente').classList.toggle('active', u.tipo_usuario === 'cliente');
+
+    if (u.tipo_usuario === 'tecnico') {
+        document.getElementById('editComissao').value = u.comissao_percentual || 0;
+        document.getElementById('editVerFila').checked = !!u.pode_ver_fila_aberta;
+    }
+    if (u.tipo_usuario === 'cliente') {
+        document.getElementById('editClienteId').value = u.cliente_id || '';
+    }
+
+    document.getElementById('modalEditar').classList.add('active');
+}
+
+async function salvarEdicao() {
+    if (!editandoId) return;
+    const u = todosUsuarios.find(x => x.id === editandoId);
+
+    const payload = {
+        nome: document.getElementById('editNome').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        ativo: document.getElementById('editAtivo').checked,
+    };
+
+    if (!payload.nome || payload.nome.length < 2) { mostrarErro('Nome inválido'); return; }
+    if (!payload.email) { mostrarErro('Email obrigatório'); return; }
+
+    if (u.tipo_usuario === 'tecnico') {
+        const com = parseFloat(document.getElementById('editComissao').value) || 0;
+        if (com < 0 || com > 100) { mostrarErro('Comissão deve estar entre 0 e 100'); return; }
+        payload.comissao_percentual = com;
+        payload.pode_ver_fila_aberta = document.getElementById('editVerFila').checked;
+    }
+
+    if (u.tipo_usuario === 'cliente') {
+        const cid = document.getElementById('editClienteId').value;
+        if (cid) payload.cliente_id = parseInt(cid, 10);
+    }
+
+    try {
+        const res = await fetch(`/api/usuarios/${editandoId}`, {
+            method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            mostrarSucesso('Usuário atualizado!');
+            fecharModal('modalEditar');
+            carregar();
+        } else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao salvar');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// ========== RESETAR SENHA ==========
+function abrirResetSenha(id) {
+    const u = todosUsuarios.find(x => x.id === id);
+    if (!u) return;
+    resetandoId = id;
+    document.getElementById('senhaUsuarioLabel').textContent = `${u.nome} (${u.email})`;
+    document.getElementById('novaSenha').value = '';
+    document.getElementById('modalSenha').classList.add('active');
+}
+
+async function confirmarResetSenha() {
+    if (!resetandoId) return;
+    const senha = document.getElementById('novaSenha').value;
+    if (!senha || senha.length < 6) { mostrarErro('Senha deve ter no mínimo 6 caracteres'); return; }
+
+    try {
+        const res = await fetch(`/api/usuarios/${resetandoId}/resetar-senha`, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ nova_senha: senha })
+        });
+        if (res.ok) {
+            mostrarSucesso('Senha redefinida!');
+            fecharModal('modalSenha');
+        } else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao resetar senha');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// ========== ATIVAR/DESATIVAR ==========
+async function ativar(id) {
+    try {
+        const res = await fetch(`/api/usuarios/${id}/ativar`, { method: 'POST', headers: authHeaders() });
+        if (res.ok) { mostrarSucesso('Usuário ativado!'); carregar(); }
+        else { const e = await res.json(); mostrarErro(e.detail || 'Erro'); }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+async function desativar(id) {
+    const u = todosUsuarios.find(x => x.id === id);
+    if (!u) return;
+    if (!confirm(`Desativar o usuário "${u.nome}"? Ele não poderá mais acessar o sistema.`)) return;
+
+    try {
+        const res = await fetch(`/api/usuarios/${id}/desativar`, { method: 'POST', headers: authHeaders() });
+        if (res.ok) { mostrarSucesso('Usuário desativado'); carregar(); }
+        else { const e = await res.json(); mostrarErro(e.detail || 'Erro ao desativar'); }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// ========== HELPERS ==========
+function fecharModal(id) {
+    document.getElementById(id).classList.remove('active');
+    if (id === 'modalEditar') editandoId = null;
+    if (id === 'modalSenha') resetandoId = null;
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    window.location.href = '/';
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        fecharModal('modalNovo');
+        fecharModal('modalEditar');
+        fecharModal('modalSenha');
+    }
+});
+['modalNovo', 'modalEditar', 'modalSenha'].forEach(id => {
+    document.getElementById(id).addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) fecharModal(id);
+    });
+});
+
+document.addEventListener('DOMContentLoaded', carregar);
+
+// =================== GUARDA ADMIN (redireciona não-admins) ===================
+(async function() {
+    try {
+        const t = localStorage.getItem('token') || localStorage.getItem('access_token');
+        if (!t) { window.location.href = '/'; return; }
+        const r = await fetch('/api/usuario-logado', { headers: { 'Authorization': 'Bearer ' + t } });
+        if (!r.ok) { window.location.href = '/'; return; }
+        const u = await r.json();
+        const ehAdmin = u.is_admin || u.tipo_usuario === 'admin';
+        if (!ehAdmin) {
+            if (u.tipo_usuario === 'tecnico') window.location.href = '/tecnico/painel';
+            else if (u.tipo_usuario === 'cliente') window.location.href = '/cliente/painel';
+            else window.location.href = '/';
+        }
+    } catch(e) { window.location.href = '/'; }
+})();
+</script>
+</body>
+</html>

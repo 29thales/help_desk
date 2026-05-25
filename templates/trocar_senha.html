@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trocar Senha - Help Desk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.card {
+    background: white; border-radius: 14px; padding: 35px;
+    width: 100%; max-width: 440px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.card h1 { color: #333; font-size: 22px; margin-bottom: 8px; }
+.card p.sub { color: #888; font-size: 13px; margin-bottom: 20px; }
+.aviso {
+    background: #fff9c4; padding: 12px; border-radius: 6px;
+    border-left: 3px solid #f39c12; font-size: 13px; color: #5d4e00;
+    margin-bottom: 20px;
+}
+.form-group { margin-bottom: 15px; }
+.form-group label {
+    font-size: 12px; color: #666; font-weight: 600;
+    margin-bottom: 5px; display: block;
+}
+.form-group input {
+    width: 100%; padding: 11px 14px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+}
+.form-group input:focus { outline: none; border-color: #667eea; }
+.btn {
+    width: 100%; padding: 12px; border: none; border-radius: 6px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; font-size: 15px; font-weight: 600; cursor: pointer;
+    margin-top: 10px;
+}
+.btn:hover { transform: translateY(-1px); }
+.msg { padding: 10px; border-radius: 6px; font-size: 13px; margin-top: 10px; display: none; }
+.msg.erro { background: #f8d7da; color: #721c24; }
+.msg.ok { background: #d4edda; color: #155724; }
+.help-text { font-size: 11px; color: #888; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="card">
+    <h1>🔑 Trocar sua senha</h1>
+    <p class="sub">Defina uma nova senha para acessar o sistema.</p>
+
+    <div class="aviso" id="avisoObrigatorio" style="display:none;">
+        ⚠️ No primeiro acesso você precisa trocar a senha inicial antes de continuar.
+    </div>
+
+    <div class="form-group">
+        <label>Senha atual *</label>
+        <input type="password" id="senhaAtual" placeholder="A senha que você usou para entrar">
+    </div>
+    <div class="form-group">
+        <label>Nova senha *</label>
+        <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres">
+        <div class="help-text">Use algo fácil de lembrar mas difícil de adivinhar.</div>
+    </div>
+    <div class="form-group">
+        <label>Confirmar nova senha *</label>
+        <input type="password" id="confSenha" placeholder="Digite novamente">
+    </div>
+
+    <button class="btn" onclick="trocar()">💾 Salvar nova senha</button>
+    <div class="msg erro" id="msgErro"></div>
+    <div class="msg ok" id="msgOk"></div>
+</div>
+
+<script>
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+
+async function init() {
+    const tok = getToken();
+    if (!tok) { window.location.href = '/'; return; }
+    try {
+        const r = await fetch('/api/usuario-logado', { headers: { 'Authorization': 'Bearer ' + tok }});
+        if (!r.ok) { window.location.href = '/'; return; }
+        const me = await r.json();
+        if (me.precisa_trocar_senha) {
+            document.getElementById('avisoObrigatorio').style.display = '';
+        }
+        window._tipoUsuario = me.tipo_usuario;
+    } catch(e) { window.location.href = '/'; }
+}
+
+function destinoApos() {
+    const t = window._tipoUsuario;
+    if (t === 'cliente') return '/cliente/painel';
+    if (t === 'tecnico') return '/tecnico/painel';
+    return '/dashboard';
+}
+
+async function trocar() {
+    const atual = document.getElementById('senhaAtual').value;
+    const nova = document.getElementById('novaSenha').value;
+    const conf = document.getElementById('confSenha').value;
+    const erro = document.getElementById('msgErro');
+    const ok   = document.getElementById('msgOk');
+    erro.style.display = 'none'; ok.style.display = 'none';
+
+    if (!atual || !nova || !conf) {
+        erro.textContent = '❌ Preencha todos os campos.'; erro.style.display = 'block'; return;
+    }
+    if (nova.length < 6) {
+        erro.textContent = '❌ Nova senha precisa ter pelo menos 6 caracteres.'; erro.style.display = 'block'; return;
+    }
+    if (nova !== conf) {
+        erro.textContent = '❌ Nova senha e confirmação não batem.'; erro.style.display = 'block'; return;
+    }
+
+    try {
+        const r = await fetch('/api/cliente/trocar-minha-senha', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senha_atual: atual, nova_senha: nova })
+        });
+        if (r.ok) {
+            ok.textContent = '✅ Senha trocada! Redirecionando...';
+            ok.style.display = 'block';
+            setTimeout(() => { window.location.href = destinoApos(); }, 1500);
+        } else {
+            const e = await r.json();
+            erro.textContent = '❌ ' + (e.detail || 'Erro ao trocar senha');
+            erro.style.display = 'block';
+        }
+    } catch (e) {
+        erro.textContent = '❌ ' + e.message;
+        erro.style.display = 'block';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('keydown', e => { if (e.key === 'Enter') trocar(); });
+</script>
+</body>
+</html>

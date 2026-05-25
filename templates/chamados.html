@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chamados - Help Desk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; }
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 22px; }
+header nav { display: flex; gap: 10px; align-items: center; }
+header nav a {
+    color: white; text-decoration: none; padding: 8px 14px;
+    border-radius: 6px; background: rgba(255,255,255,0.15);
+    font-size: 14px; transition: background 0.3s;
+}
+header nav a:hover { background: rgba(255,255,255,0.25); }
+.btn-logout {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+/* STATS */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card {
+    background: white; padding: 15px; border-radius: 10px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.stat-card .num { font-size: 28px; font-weight: 700; }
+.stat-card .label { font-size: 12px; color: #888; margin-top: 2px; }
+.stat-card.aberto .num { color: #f39c12; }
+.stat-card.em_atendimento .num { color: #3498db; }
+.stat-card.finalizado .num { color: #27ae60; }
+.stat-card.total .num { color: #667eea; }
+
+.card {
+    background: white; padding: 25px; border-radius: 10px;
+    margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.card h3 {
+    color: #333; margin-bottom: 20px; font-size: 18px;
+    border-bottom: 2px solid #667eea; padding-bottom: 10px;
+}
+
+/* FORM */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group { margin-bottom: 5px; }
+.form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 600; font-size: 13px; }
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 14px; font-family: inherit; transition: border-color 0.3s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+.form-group textarea { min-height: 80px; resize: vertical; }
+.full-width { grid-column: 1 / -1; }
+
+/* TIPO SERVIÇO TOGGLE */
+.tipo-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+.tipo-btn {
+    flex: 1; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px;
+    background: white; cursor: pointer; text-align: center; transition: all 0.3s;
+    font-size: 14px; font-weight: 600; color: #666;
+}
+.tipo-btn:hover { border-color: #667eea; }
+.tipo-btn.active-usuario { border-color: #3498db; background: #ebf5fb; color: #2980b9; }
+.tipo-btn.active-tecnico { border-color: #27ae60; background: #eafaf1; color: #27ae60; }
+.tipo-btn .icon { font-size: 24px; display: block; margin-bottom: 5px; }
+
+/* SERVIÇO TÉCNICO CARDS */
+.servicos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
+.servico-card {
+    padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;
+    cursor: pointer; text-align: center; transition: all 0.3s; background: white;
+}
+.servico-card:hover { border-color: #27ae60; }
+.servico-card.active { border-color: #27ae60; background: #eafaf1; }
+.servico-card .servico-nome { font-size: 13px; font-weight: 600; color: #333; }
+.servico-card .servico-valor { font-size: 16px; font-weight: 700; color: #27ae60; margin-top: 4px; }
+
+.valor-fixo-custom { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.valor-fixo-custom label { white-space: nowrap; margin: 0; }
+.valor-fixo-custom input { width: 150px; }
+
+/* BUTTONS */
+.form-actions { display: flex; gap: 10px; margin-top: 15px; }
+.btn {
+    padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.3s;
+}
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+.btn-secondary { background: #e0e0e0; color: #555; }
+.btn-success { background: #27ae60; color: white; }
+.btn-warning { background: #f39c12; color: white; }
+.btn-danger { background: #e74c3c; color: white; }
+.btn-info { background: #3498db; color: white; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* FILTERS */
+.filters { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+.filters select, .filters input {
+    padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px;
+}
+.filters select:focus, .filters input:focus { outline: none; border-color: #667eea; }
+.filters input { flex: 1; min-width: 200px; }
+
+/* TABLE */
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fa; }
+th { padding: 10px 8px; text-align: left; color: #666; font-weight: 600; font-size: 12px; border-bottom: 2px solid #e0e0e0; }
+td { padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 13px; color: #444; }
+tr:hover { background: #f9f9ff; }
+tr { cursor: pointer; }
+
+/* BADGES */
+.badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+}
+.badge-aberto { background: #fff3cd; color: #856404; }
+.badge-em_atendimento { background: #cce5ff; color: #004085; }
+.badge-finalizado { background: #d4edda; color: #155724; }
+.badge-cancelado { background: #f8d7da; color: #721c24; }
+.badge-baixa { background: #e8f5e9; color: #2e7d32; }
+.badge-media { background: #fff8e1; color: #f57f17; }
+.badge-alta { background: #fff3e0; color: #e65100; }
+.badge-urgente { background: #ffebee; color: #c62828; }
+.badge-tipo-usuario { background: #e3f2fd; color: #1565c0; }
+.badge-tipo-tecnico { background: #e8f5e9; color: #2e7d32; }
+
+/* MODAL */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start;
+    padding-top: 40px; overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 12px; width: 95%; max-width: 800px;
+    max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    margin-bottom: 40px;
+}
+.modal-header {
+    padding: 20px 25px; border-bottom: 2px solid #667eea;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; background: white; z-index: 1;
+}
+.modal-header h3 { color: #333; font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+.modal-body { padding: 25px; }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+.detail-item label { display: block; font-size: 11px; color: #999; text-transform: uppercase; font-weight: 700; }
+.detail-item .value { font-size: 15px; color: #333; margin-top: 3px; font-weight: 500; }
+
+.historico-section { margin-top: 20px; }
+.historico-section h4 { font-size: 16px; color: #333; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+.historico-item {
+    background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 10px;
+    border-left: 3px solid #667eea;
+}
+.historico-item .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.historico-item .hist-user { font-weight: 600; color: #667eea; font-size: 13px; }
+.historico-item .hist-date { font-size: 11px; color: #999; }
+.historico-item .hist-desc { font-size: 14px; color: #444; line-height: 1.5; }
+.historico-item .hist-tempo { font-size: 12px; color: #27ae60; font-weight: 600; margin-top: 5px; }
+.historico-item .hist-actions { display: flex; gap: 5px; margin-top: 8px; }
+
+.historico-form { background: #f0f4ff; border-radius: 8px; padding: 15px; margin-top: 15px; }
+.historico-form h5 { margin-bottom: 10px; color: #667eea; }
+.historico-form textarea { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; min-height: 60px; font-family: inherit; margin-bottom: 8px; }
+.historico-form textarea:focus { outline: none; border-color: #667eea; }
+.historico-form .hist-form-row { display: flex; gap: 10px; align-items: flex-end; }
+.historico-form input[type="number"] { width: 120px; padding: 8px; border: 2px solid #ddd; border-radius: 6px; }
+
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; display: none; }
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.empty { text-align: center; padding: 30px; color: #999; }
+.editing-mode .card h3 { color: #f39c12; }
+
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 10px; }
+    .filters { flex-direction: column; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .tipo-toggle { flex-direction: column; }
+    .servicos-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* =============================================
+   NOVO: BOX DE RESUMO FINANCEIRO
+   ============================================= */
+.resumo-financeiro {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px; margin: 20px 0; padding: 18px;
+    background: linear-gradient(135deg, #f8f9ff, #eef0ff);
+    border-radius: 10px; border: 1px solid #e0e6ff;
+}
+.resumo-item { text-align: center; }
+.resumo-item .rf-label {
+    font-size: 11px; color: #777; text-transform: uppercase;
+    letter-spacing: 0.5px; font-weight: 700; margin-bottom: 4px;
+}
+.resumo-item .rf-valor {
+    font-size: 20px; font-weight: 700; color: #667eea;
+}
+.resumo-item .rf-valor.verde { color: #27ae60; }
+.resumo-item .rf-valor.laranja { color: #f39c12; }
+.resumo-item .rf-valor.pequeno { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.resumo-item .rf-sub { font-size: 11px; color: #888; margin-top: 2px; }
+
+/* =============================================
+   NOVO: TIMELINE DO HISTÓRICO
+   ============================================= */
+.timeline { position: relative; padding-left: 30px; }
+.timeline::before {
+    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, #667eea, #e0e0e0);
+}
+.timeline-item {
+    position: relative; margin-bottom: 15px;
+    background: #f8f9fa; border-radius: 8px; padding: 14px 16px;
+    border-left: 3px solid #667eea;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.timeline-item:hover {
+    transform: translateX(2px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+}
+.timeline-item::before {
+    content: ''; position: absolute; left: -24px; top: 18px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #667eea; border: 3px solid white;
+    box-shadow: 0 0 0 2px #667eea;
+}
+.timeline-item.tecnico::before { background: #27ae60; box-shadow: 0 0 0 2px #27ae60; }
+.timeline-item.tecnico { border-left-color: #27ae60; }
+
+.timeline-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 8px; gap: 10px; flex-wrap: wrap;
+}
+.timeline-data-hora {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.timeline-data {
+    background: #667eea; color: white;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 700;
+}
+.timeline-horario {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: white; padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; color: #555; font-weight: 600;
+    border: 1px solid #e0e0e0;
+}
+.timeline-duracao {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #d4edda; color: #155724;
+    padding: 4px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 700;
+}
+.timeline-duracao.tecnico { background: #eafaf1; color: #27ae60; }
+
+.timeline-user { font-size: 12px; color: #888; margin-bottom: 6px; }
+.timeline-user strong { color: #667eea; }
+.timeline-desc { font-size: 14px; color: #444; line-height: 1.5; margin-top: 4px; white-space: pre-wrap; }
+.timeline-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+.historico-contador { font-size: 12px; color: #888; font-weight: 500; float: right; }
+
+/* =============================================
+   NOVO: FORMULÁRIO DE ADICIONAR - TOGGLE DE MODO E CAMPOS DE HORÁRIO
+   ============================================= */
+.modo-toggle {
+    display: flex; gap: 8px; margin-bottom: 15px;
+    background: white; padding: 4px; border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+.modo-toggle button {
+    flex: 1; padding: 8px 12px; border: none; background: transparent;
+    border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+    color: #666; transition: all 0.2s; font-family: inherit;
+}
+.modo-toggle button.active { background: #667eea; color: white; }
+
+.form-horario {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr auto;
+    gap: 10px; margin-bottom: 12px; align-items: end;
+}
+.form-horario-grupo { display: flex; flex-direction: column; }
+.form-horario-grupo label {
+    font-size: 11px; color: #666; font-weight: 600;
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.form-horario-grupo input {
+    padding: 8px 10px; border: 2px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: inherit;
+}
+.form-horario-grupo input:focus { outline: none; border-color: #667eea; }
+
+.tempo-calculado {
+    background: #d4edda; color: #155724;
+    padding: 8px 12px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    white-space: nowrap; text-align: center;
+}
+.tempo-calculado.invalido { background: #f8d7da; color: #721c24; }
+
+.form-minutos-direto {
+    display: grid; grid-template-columns: auto auto 1fr;
+    gap: 10px; align-items: end; margin-bottom: 12px;
+}
+.form-row-final {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.form-hint { font-size: 11px; color: #999; }
+
+@media (max-width: 700px) {
+    .form-horario { grid-template-columns: 1fr 1fr; }
+    .form-horario > .tempo-calculado { grid-column: 1 / -1; }
+    .form-minutos-direto { grid-template-columns: 1fr; }
+}
+
+/* =============================================
+   NOVO: COMBOBOX DE SERVIÇO TÉCNICO
+   ============================================= */
+.combobox-group {
+    background: #f8f9ff;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e0e6ff;
+    margin-bottom: 15px;
+}
+.combobox-label {
+    font-weight: 600; color: #333; font-size: 13px;
+    margin-bottom: 8px; display: block;
+}
+.combobox-wrapper { position: relative; }
+.combobox-wrapper .cb-input {
+    width: 100%; padding: 11px 40px 11px 14px;
+    border: 2px solid #e0e0e0; border-radius: 8px;
+    font-size: 14px; font-family: inherit; background: white;
+}
+.combobox-wrapper .cb-input:focus { outline: none; border-color: #667eea; }
+.combobox-wrapper .cb-seta {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: #999; pointer-events: none;
+}
+
+.cb-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0;
+    margin-top: 4px; border: 2px solid #e0e0e0; border-radius: 8px;
+    max-height: 260px; overflow-y: auto; background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 100; display: none;
+}
+.cb-dropdown.open { display: block; }
+.cb-item {
+    padding: 10px 14px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; border-bottom: 1px solid #f5f5f5;
+}
+.cb-item:last-of-type { border-bottom: none; }
+.cb-item:hover, .cb-item.highlight { background: #f0f4ff; }
+.cb-item.active { background: #eafaf1; }
+.cb-item-nome { font-size: 14px; color: #333; font-weight: 500; }
+.cb-item-cat {
+    font-size: 10px; color: white; background: #667eea;
+    padding: 2px 8px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    font-weight: 600;
+}
+.cb-item-cat.cat-manutencao { background: #3498db; }
+.cb-item-cat.cat-hardware { background: #e67e22; }
+.cb-item-cat.cat-software { background: #9b59b6; }
+.cb-item-cat.cat-rede { background: #27ae60; }
+.cb-item-cat.cat-dados { background: #16a085; }
+.cb-empty { padding: 16px; text-align: center; color: #999; font-size: 13px; }
+.cb-footer {
+    padding: 10px 14px; background: #fffaf0;
+    border-top: 2px dashed #f39c12;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; color: #f39c12; font-weight: 600;
+    font-size: 13px;
+}
+.cb-footer:hover { background: #fff3cd; }
+
+.servico-selecionado {
+    margin-top: 12px; padding: 14px 16px;
+    background: linear-gradient(135deg, #eafaf1, #d4edda);
+    border: 2px solid #27ae60; border-radius: 8px;
+    display: flex; align-items: center; gap: 12px;
+}
+.ss-icone {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: white; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+}
+.ss-info { flex: 1; }
+.ss-label { font-size: 11px; color: #155724; text-transform: uppercase; font-weight: 700; letter-spacing: 0.3px; }
+.ss-nome { font-size: 16px; font-weight: 700; color: #155724; margin-top: 2px; }
+.ss-cat { font-size: 12px; color: #155724; opacity: 0.8; margin-top: 2px; }
+.ss-trocar {
+    background: white; border: 1px solid #27ae60;
+    color: #155724; padding: 6px 12px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 600;
+}
+
+.servico-custom-box {
+    margin-top: 12px; padding: 14px 16px;
+    background: linear-gradient(135deg, #fff3cd, #ffe8a1);
+    border: 2px solid #f39c12; border-radius: 8px;
+}
+.servico-custom-box h5 {
+    color: #856404; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 0.3px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+.servico-custom-box input {
+    width: 100%; padding: 10px 12px; border: 2px solid #e0c98e;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+    margin-bottom: 8px;
+}
+
+.info-sem-valor {
+    margin-top: 10px; padding: 10px 14px;
+    background: #e8f4ff; border-left: 3px solid #3498db;
+    border-radius: 4px; font-size: 12px; color: #0c5460;
+    display: flex; align-items: flex-start; gap: 8px;
+}
+
+/* =============================================
+   NOVO: MODAL DE FINALIZAÇÃO TÉCNICO
+   ============================================= */
+.finalizar-box {
+    background: linear-gradient(135deg, #fff9e6, #fff3cd);
+    border: 2px solid #f39c12; border-radius: 10px;
+    padding: 20px; margin: 15px 0;
+}
+.finalizar-box h4 {
+    color: #856404; margin-bottom: 5px; border: none; padding: 0;
+    font-size: 16px;
+    display: flex; align-items: center; gap: 10px;
+}
+.finalizar-box .sub-titulo {
+    color: #856404; font-size: 12px; opacity: 0.85;
+    margin-bottom: 15px;
+}
+.finalizar-info {
+    background: white; border-radius: 8px; padding: 12px 15px;
+    margin-bottom: 15px;
+}
+.finalizar-info .linha {
+    display: flex; justify-content: space-between;
+    padding: 5px 0; font-size: 13px;
+}
+.finalizar-info .linha:not(:last-child) { border-bottom: 1px solid #f0f0f0; }
+.finalizar-info .linha .lbl { color: #666; }
+.finalizar-info .linha .val { color: #333; font-weight: 600; }
+
+.calc-valor-box {
+    background: white; padding: 15px; border-radius: 8px;
+    border: 2px solid #e0e0e0;
+}
+.calc-valor-box .calc-grid {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px;
+    align-items: end;
+}
+.calc-valor-box label {
+    font-size: 11px; color: #555; font-weight: 600;
+    margin-bottom: 5px; display: block; text-transform: uppercase;
+}
+.calc-valor-box input {
+    width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 15px; font-weight: 700;
+    text-align: center; font-family: inherit;
+}
+.calc-valor-box .operador {
+    text-align: center; font-size: 22px; color: #999;
+    font-weight: 700; padding-bottom: 8px;
+}
+.calc-valor-box .resultado {
+    margin-top: 12px; padding: 12px;
+    background: linear-gradient(135deg, #eafaf1, #d4edda);
+    border: 2px solid #27ae60; border-radius: 8px;
+    text-align: center;
+}
+.calc-valor-box .resultado-label {
+    font-size: 11px; color: #155724; text-transform: uppercase;
+    font-weight: 700; letter-spacing: 0.5px;
+}
+.calc-valor-box .resultado-valor {
+    font-size: 28px; color: #27ae60; font-weight: 700;
+    margin-top: 4px;
+}
+.finalizar-dica {
+    margin-top: 12px; padding: 10px 14px;
+    background: #e8f4ff; border-left: 3px solid #3498db;
+    border-radius: 4px; font-size: 12px; color: #0c5460;
+}
+.finalizar-btns {
+    display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+    .calc-valor-box .calc-grid { grid-template-columns: 1fr; }
+    .calc-valor-box .operador { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🎫 Chamados</h1>
+    <nav>
+        <a href="/dashboard">📊 Dashboard</a>
+        <a href="/clientes/pagina">👥 Clientes</a>
+        <a href="/chamados/pagina">🎫 Chamados</a>
+        <a href="/faturamento/pagina">💰 Faturamento</a>
+        <a href="/servicos/pagina">🔧 Serviços</a>
+        <a href="/comissao/pagina" id="linkComissaoAdmin" style="display:none;">💼 Comissões</a>
+        <a href="/usuarios/pagina" id="linkUsuariosAdmin" style="display:none;">👫 Usuários</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError" class="alert alert-error"></div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat-card total"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
+        <div class="stat-card aberto"><div class="num" id="statAberto">0</div><div class="label">Abertos</div></div>
+        <div class="stat-card em_atendimento"><div class="num" id="statAtendimento">0</div><div class="label">Em Atendimento</div></div>
+        <div class="stat-card finalizado"><div class="num" id="statFinalizado">0</div><div class="label">Finalizados</div></div>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <div class="card" id="cardForm">
+        <h3 id="formTitle">➕ Novo Chamado</h3>
+        <form id="formChamado">
+
+            <!-- TIPO DE SERVIÇO -->
+            <label style="font-weight:600; color:#333; margin-bottom:8px; display:block;">Tipo de Serviço</label>
+            <div class="tipo-toggle">
+                <div class="tipo-btn active-usuario" id="btnTipoUsuario" onclick="selecionarTipo('suporte_usuario')">
+                    <span class="icon">👤</span>
+                    Suporte ao Usuário
+                    <div style="font-size:11px; font-weight:400; color:#999; margin-top:3px;">Cobra por hora trabalhada</div>
+                </div>
+                <div class="tipo-btn" id="btnTipoTecnico" onclick="selecionarTipo('suporte_tecnico')">
+                    <span class="icon">🔧</span>
+                    Suporte Técnico
+                    <div style="font-size:11px; font-weight:400; color:#999; margin-top:3px;">Valor fixo por serviço</div>
+                </div>
+            </div>
+            <input type="hidden" id="tipo_servico" value="suporte_usuario">
+
+            <!-- SERVIÇOS TÉCNICOS (oculto por padrão) - NOVA VERSÃO COMBOBOX -->
+            <div id="secaoServicos" style="display:none; margin-bottom:15px;">
+
+                <div class="combobox-group">
+                    <label class="combobox-label">🔧 Selecione o serviço técnico</label>
+
+                    <!-- Combobox (busca + dropdown) -->
+                    <div id="comboxServicoWrap" class="combobox-wrapper">
+                        <input type="text" id="comboxServicoInput" class="cb-input"
+                               placeholder="Digite para buscar ou clique para ver tudo..."
+                               autocomplete="off"
+                               onfocus="abrirDropdownServicos()"
+                               oninput="filtrarServicos()">
+                        <span class="cb-seta">▾</span>
+                        <div id="comboxServicoDropdown" class="cb-dropdown"></div>
+                    </div>
+
+                    <!-- Quando serviço é selecionado -->
+                    <div id="servicoSelecionadoBox" class="servico-selecionado" style="display:none;">
+                        <div class="ss-icone">🔧</div>
+                        <div class="ss-info">
+                            <div class="ss-label">Serviço selecionado</div>
+                            <div class="ss-nome" id="servicoSelNome">-</div>
+                            <div class="ss-cat" id="servicoSelCat">-</div>
+                        </div>
+                        <button type="button" class="ss-trocar" onclick="limparServicoSelecionado()">Trocar</button>
+                    </div>
+
+                    <!-- Serviço personalizado (texto livre) -->
+                    <div id="servicoCustomBox" class="servico-custom-box" style="display:none;">
+                        <h5>✏️ Serviço personalizado</h5>
+                        <input type="text" id="servicoCustomNome" placeholder="Nome do serviço (ex: Manutenção específica no servidor)">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="voltarParaCombobox()">← Voltar para lista de serviços</button>
+                    </div>
+
+                    <!-- Hidden inputs que o form usa -->
+                    <input type="hidden" id="servico_id" value="">
+                    <input type="hidden" id="servico_tecnico" value="">
+
+                    <div class="info-sem-valor">
+                        <span>💡</span>
+                        <span>O valor do chamado será definido pelo administrador ao finalizar o atendimento. Até lá, fica zerado.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Título *</label>
+                    <input id="titulo" placeholder="Resumo do problema" required>
+                </div>
+                <div class="form-group">
+                    <label>Empresa (Cliente) *</label>
+                    <select id="cliente_id" required>
+                        <option value="">Selecione a empresa...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="categoria">
+                        <option value="geral">Geral</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="rede">Rede</option>
+                        <option value="seguranca">Segurança</option>
+                        <option value="email">Email</option>
+                        <option value="impressora">Impressora</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridade</label>
+                    <select id="prioridade">
+                        <option value="baixa">Baixa</option>
+                        <option value="media" selected>Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Descrição *</label>
+                    <textarea id="descricao" placeholder="Descreva o problema detalhadamente..." required></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btnSalvar">✓ Abrir Chamado</button>
+                <button type="button" class="btn btn-secondary" id="btnCancelar" style="display:none;" onclick="cancelarEdicao()">✕ Cancelar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- LISTA -->
+    <div class="card">
+        <h3>📋 Lista de Chamados</h3>
+        <div class="filters">
+            <input type="text" id="busca" placeholder="🔍 Buscar por número, título ou empresa..." oninput="filtrarChamados()">
+            <select id="filtroStatus" onchange="filtrarChamados()">
+                <option value="">Todos os status</option>
+                <option value="aberto">Abertos</option>
+                <option value="em_atendimento">Em Atendimento</option>
+                <option value="finalizado">Finalizados</option>
+                <option value="cancelado">Cancelados</option>
+            </select>
+            <select id="filtroTipo" onchange="filtrarChamados()">
+                <option value="">Todos os tipos</option>
+                <option value="suporte_usuario">Suporte ao Usuário</option>
+                <option value="suporte_tecnico">Suporte Técnico</option>
+            </select>
+            <select id="filtroOrigem" onchange="filtrarChamados()">
+                <option value="">Todas as origens</option>
+                <option value="admin">👑 Admin</option>
+                <option value="tecnico">🔧 Técnico</option>
+                <option value="cliente">🌐 Portal</option>
+            </select>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nº</th>
+                        <th>Título</th>
+                        <th>Empresa</th>
+                        <th>Origem</th>
+                        <th>Tipo</th>
+                        <th>Prioridade</th>
+                        <th>Status</th>
+                        <th>Técnico</th>
+                        <th>Tempo</th>
+                        <th>Valor</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaChamados">
+                    <tr><td colspan="11" class="empty">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Detalhes do Chamado</h3>
+            <button class="modal-close" onclick="fecharModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+let todosChamados = [];
+let todosClientes = [];
+let servicosTecnicos = [];
+let editandoId = null;
+let tipoSelecionado = 'suporte_usuario';
+let servicoSelecionado = '';
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+function authHeaders() { return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' }; }
+
+function mostrarSucesso(msg) {
+    const el = document.getElementById('alertSuccess');
+    el.textContent = '✅ ' + msg; el.style.display = 'block';
+    document.getElementById('alertError').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 3000);
+}
+function mostrarErro(msg) {
+    const el = document.getElementById('alertError');
+    el.textContent = '❌ ' + msg; el.style.display = 'block';
+    document.getElementById('alertSuccess').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function formatarData(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+function formatarTempo(min) {
+    if (!min || min === 0) return '-';
+    const h = Math.floor(min / 60); const m = min % 60;
+    if (h > 0) return `${h}h ${m}min`;
+    return `${m}min`;
+}
+function formatarValor(val) { return `R$ ${(val || 0).toFixed(2)}`; }
+function tipoLabel(tipo) { return tipo === 'suporte_tecnico' ? 'Técnico' : 'Usuário'; }
+function tipoBadge(tipo) { return tipo === 'suporte_tecnico' ? 'badge-tipo-tecnico' : 'badge-tipo-usuario'; }
+
+// =================== TIPO DE SERVIÇO ===================
+function selecionarTipo(tipo) {
+    tipoSelecionado = tipo;
+    document.getElementById('tipo_servico').value = tipo;
+
+    const btnU = document.getElementById('btnTipoUsuario');
+    const btnT = document.getElementById('btnTipoTecnico');
+    const secao = document.getElementById('secaoServicos');
+
+    btnU.className = 'tipo-btn' + (tipo === 'suporte_usuario' ? ' active-usuario' : '');
+    btnT.className = 'tipo-btn' + (tipo === 'suporte_tecnico' ? ' active-tecnico' : '');
+
+    if (tipo === 'suporte_tecnico') {
+        secao.style.display = 'block';
+        carregarServicos();
+    } else {
+        secao.style.display = 'none';
+        // Limpa toda a seleção quando volta pra usuário
+        document.getElementById('servico_id').value = '';
+        document.getElementById('servico_tecnico').value = '';
+        const box = document.getElementById('servicoSelecionadoBox');
+        const custom = document.getElementById('servicoCustomBox');
+        const wrap = document.getElementById('comboxServicoWrap');
+        if (box) box.style.display = 'none';
+        if (custom) custom.style.display = 'none';
+        if (wrap) wrap.style.display = '';
+    }
+}
+
+async function carregarServicos() {
+    if (servicosTecnicos.length > 0) { renderizarDropdownServicos(servicosTecnicos); return; }
+    try {
+        // Novo endpoint público (só ativos, sem valor)
+        const res = await fetch('/api/servicos/', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) {
+            servicosTecnicos = [];
+            renderizarDropdownServicos([]);
+            return;
+        }
+        servicosTecnicos = await res.json();
+        renderizarDropdownServicos(servicosTecnicos);
+    } catch (err) { console.error(err); }
+}
+
+function badgeCatClass(cat) {
+    const mapa = {
+        'Manutenção': 'cat-manutencao', 'Hardware': 'cat-hardware',
+        'Software': 'cat-software', 'Rede': 'cat-rede', 'Dados': 'cat-dados',
+    };
+    return mapa[cat] || '';
+}
+
+function renderizarDropdownServicos(lista) {
+    const dd = document.getElementById('comboxServicoDropdown');
+    let html = '';
+
+    if (!lista || lista.length === 0) {
+        html = '<div class="cb-empty">Nenhum serviço encontrado</div>';
+    } else {
+        html = lista.map(s => `
+            <div class="cb-item" onclick="selecionarServicoCombobox(${s.id})">
+                <span class="cb-item-nome">${escapeHTMLstr(s.nome)}</span>
+                <span class="cb-item-cat ${badgeCatClass(s.categoria)}">${escapeHTMLstr(s.categoria)}</span>
+            </div>
+        `).join('');
+    }
+
+    // Footer de "serviço personalizado" sempre presente
+    html += `
+        <div class="cb-footer" onclick="ativarServicoCustom()">
+            ✏️ <span>Nenhum desses? Criar serviço personalizado →</span>
+        </div>
+    `;
+
+    dd.innerHTML = html;
+}
+
+function escapeHTMLstr(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+}
+
+function abrirDropdownServicos() {
+    document.getElementById('comboxServicoDropdown').classList.add('open');
+}
+
+function fecharDropdownServicos() {
+    document.getElementById('comboxServicoDropdown').classList.remove('open');
+}
+
+function filtrarServicos() {
+    const termo = (document.getElementById('comboxServicoInput').value || '').toLowerCase().trim();
+    const filtrados = !termo ? servicosTecnicos : servicosTecnicos.filter(s =>
+        (s.nome + ' ' + s.categoria).toLowerCase().includes(termo)
+    );
+    renderizarDropdownServicos(filtrados);
+    abrirDropdownServicos();
+}
+
+function selecionarServicoCombobox(id) {
+    const s = servicosTecnicos.find(x => x.id === id);
+    if (!s) return;
+
+    document.getElementById('servico_id').value = s.id;
+    document.getElementById('servico_tecnico').value = '';
+    document.getElementById('servicoCustomNome').value = '';
+
+    // Mostra card de selecionado
+    document.getElementById('servicoSelNome').textContent = s.nome;
+    document.getElementById('servicoSelCat').textContent = s.categoria;
+    document.getElementById('servicoSelecionadoBox').style.display = 'flex';
+
+    // Esconde combobox e personalizado
+    document.getElementById('comboxServicoWrap').style.display = 'none';
+    document.getElementById('servicoCustomBox').style.display = 'none';
+
+    fecharDropdownServicos();
+}
+
+function limparServicoSelecionado() {
+    document.getElementById('servico_id').value = '';
+    document.getElementById('servico_tecnico').value = '';
+    document.getElementById('servicoSelecionadoBox').style.display = 'none';
+    document.getElementById('servicoCustomBox').style.display = 'none';
+    document.getElementById('comboxServicoWrap').style.display = '';
+    document.getElementById('comboxServicoInput').value = '';
+    renderizarDropdownServicos(servicosTecnicos);
+    document.getElementById('comboxServicoInput').focus();
+}
+
+function ativarServicoCustom() {
+    // Usar serviço com nome livre
+    document.getElementById('servico_id').value = '';
+    document.getElementById('comboxServicoWrap').style.display = 'none';
+    document.getElementById('servicoSelecionadoBox').style.display = 'none';
+    document.getElementById('servicoCustomBox').style.display = '';
+    document.getElementById('servicoCustomNome').focus();
+    fecharDropdownServicos();
+
+    // Quando o admin digita no campo, atualiza o hidden
+    document.getElementById('servicoCustomNome').oninput = function() {
+        document.getElementById('servico_tecnico').value = this.value.trim();
+    };
+}
+
+function voltarParaCombobox() {
+    document.getElementById('servico_tecnico').value = '';
+    document.getElementById('servicoCustomNome').value = '';
+    document.getElementById('servicoCustomBox').style.display = 'none';
+    document.getElementById('comboxServicoWrap').style.display = '';
+    document.getElementById('comboxServicoInput').focus();
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('comboxServicoWrap');
+    if (wrap && !wrap.contains(e.target)) {
+        fecharDropdownServicos();
+    }
+});
+
+// =================== CLIENTES ===================
+async function carregarClientes() {
+    try {
+        const res = await fetch('/api/clientes/', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) return;
+        todosClientes = await res.json();
+        const select = document.getElementById('cliente_id');
+        select.innerHTML = '<option value="">Selecione a empresa...</option>';
+        todosClientes.forEach(c => {
+            select.innerHTML += `<option value="${c.id}">${c.nome}${c.empresa ? ' - ' + c.empresa : ''} (R$ ${(c.valor_hora||0).toFixed(2)}/h)</option>`;
+        });
+    } catch (err) { console.error(err); }
+}
+
+// =================== CHAMADOS ===================
+async function carregarChamados() {
+    const token = getToken();
+    if (!token) { window.location.href = '/'; return; }
+    try {
+        const res = await fetch('/api/chamados/', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.status === 401) { logout(); return; }
+        todosChamados = await res.json();
+        atualizarStats();
+        filtrarChamados();
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+function atualizarStats() {
+    document.getElementById('statTotal').textContent = todosChamados.length;
+    document.getElementById('statAberto').textContent = todosChamados.filter(c => c.status === 'aberto').length;
+    document.getElementById('statAtendimento').textContent = todosChamados.filter(c => c.status === 'em_atendimento').length;
+    document.getElementById('statFinalizado').textContent = todosChamados.filter(c => c.status === 'finalizado').length;
+}
+
+function filtrarChamados() {
+    const busca = document.getElementById('busca').value.toLowerCase();
+    const status = document.getElementById('filtroStatus').value;
+    const tipo = document.getElementById('filtroTipo').value;
+    const origem = document.getElementById('filtroOrigem').value;
+    let filtrados = todosChamados;
+    if (busca) filtrados = filtrados.filter(c => (c.numero||'').toLowerCase().includes(busca) || (c.titulo||'').toLowerCase().includes(busca) || (c.cliente_nome||'').toLowerCase().includes(busca));
+    if (status) filtrados = filtrados.filter(c => c.status === status);
+    if (tipo) filtrados = filtrados.filter(c => c.tipo_servico === tipo);
+    if (origem) filtrados = filtrados.filter(c => (c.origem || 'admin') === origem);
+    renderizarTabela(filtrados);
+}
+
+function renderizarTabela(chamados) {
+    const tabela = document.getElementById('tabelaChamados');
+    if (chamados.length === 0) { tabela.innerHTML = '<tr><td colspan="11" class="empty">Nenhum chamado encontrado</td></tr>'; return; }
+    const origemBadge = (o) => {
+        if (o === 'cliente') return '<span style="background:#667eea; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">🌐 PORTAL</span>';
+        if (o === 'tecnico') return '<span style="background:#3498db; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">🔧 TÉCNICO</span>';
+        return '<span style="background:#764ba2; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">👑 ADMIN</span>';
+    };
+    tabela.innerHTML = chamados.map(c => `
+        <tr onclick="abrirDetalhe(${c.id})">
+            <td><strong>${c.numero}</strong></td>
+            <td>${c.titulo}</td>
+            <td>${c.cliente_nome || '-'}</td>
+            <td>${origemBadge(c.origem || 'admin')}</td>
+            <td><span class="badge ${tipoBadge(c.tipo_servico)}">${tipoLabel(c.tipo_servico)}</span></td>
+            <td><span class="badge badge-${c.prioridade}">${c.prioridade}</span></td>
+            <td><span class="badge badge-${c.status}">${c.status.replace('_', ' ')}</span></td>
+            <td>${c.tecnico_nome ? '🔧 ' + c.tecnico_nome : '<span style="color:#aaa;">— sem técnico —</span>'}</td>
+            <td>${formatarTempo(c.tempo_gasto_minutos)}</td>
+            <td style="font-weight:600; color:#27ae60;">${formatarValor(c.valor_total)}</td>
+            <td>${formatarData(c.criado_em)}</td>
+        </tr>
+    `).join('');
+}
+
+// =================== CRIAR/EDITAR ===================
+document.getElementById('formChamado').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const tipoServico = document.getElementById('tipo_servico').value;
+    const servicoIdStr = document.getElementById('servico_id').value;
+    const servicoTextoLivre = document.getElementById('servico_tecnico').value.trim();
+
+    const dados = {
+        titulo: document.getElementById('titulo').value.trim(),
+        descricao: document.getElementById('descricao').value.trim(),
+        categoria: document.getElementById('categoria').value,
+        prioridade: document.getElementById('prioridade').value,
+        cliente_id: parseInt(document.getElementById('cliente_id').value) || null,
+        tipo_servico: tipoServico,
+    };
+
+    // Só envia os campos de serviço se for suporte técnico
+    if (tipoServico === 'suporte_tecnico') {
+        if (servicoIdStr) {
+            dados.servico_id = parseInt(servicoIdStr);
+        } else if (servicoTextoLivre) {
+            dados.servico_tecnico = servicoTextoLivre;
+        }
+    }
+
+    if (!dados.titulo || !dados.descricao) { mostrarErro('Preencha título e descrição!'); return; }
+    if (!dados.cliente_id) { mostrarErro('Selecione uma empresa!'); return; }
+    if (tipoServico === 'suporte_tecnico' && !dados.servico_id && !dados.servico_tecnico) {
+        mostrarErro('Selecione um serviço técnico ou crie um personalizado!');
+        return;
+    }
+
+    try {
+        const url = editandoId ? `/api/chamados/${editandoId}` : '/api/chamados/';
+        const method = editandoId ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(dados) });
+        if (res.ok) {
+            mostrarSucesso(editandoId ? 'Chamado atualizado!' : 'Chamado aberto com sucesso!');
+            cancelarEdicao();
+            carregarChamados();
+        } else {
+            const erro = await res.json();
+            mostrarErro(erro.detail || 'Erro ao salvar');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+});
+
+function cancelarEdicao() {
+    editandoId = null;
+    document.getElementById('formChamado').reset();
+    document.getElementById('formTitle').textContent = '➕ Novo Chamado';
+    document.getElementById('btnSalvar').textContent = '✓ Abrir Chamado';
+    document.getElementById('btnCancelar').style.display = 'none';
+    document.getElementById('cardForm').classList.remove('editing-mode');
+    selecionarTipo('suporte_usuario');
+}
+
+// =================== MODAL ===================
+// =================== MODAL: DETALHE DO CHAMADO ===================
+
+// Helper: retorna data no formato YYYY-MM-DD (para <input type="date">)
+function hojeDateInput() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+// Helper: formata data ISO ou YYYY-MM-DD para DD/MM/YYYY
+function formatarDataSimples(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('pt-BR');
+}
+
+// Helper: pega só a parte de data (YYYY-MM-DD) de um ISO
+function isoParaDateInput(iso) {
+    if (!iso) return hojeDateInput();
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return hojeDateInput();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+// Helper: calcula minutos entre dois "HH:MM"
+function calcularMinutosEntre(inicio, termino) {
+    if (!inicio || !termino) return 0;
+    const [h1, m1] = inicio.split(':').map(Number);
+    const [h2, m2] = termino.split(':').map(Number);
+    let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (diff < 0) diff += 24 * 60; // passou da meia-noite
+    return diff;
+}
+
+// Helper: calcula valor da hora pela regra de cobrança (igual ao backend)
+function calcularValorPorTempo(minutos, valorHora) {
+    if (minutos <= 0 || valorHora <= 0) return 0;
+    const meiaHora = valorHora / 2;
+    if (minutos <= 30) return Math.round(meiaHora * 100) / 100;
+    const excedente = minutos - 30;
+    const proporcional = (excedente / 60) * valorHora;
+    return Math.round((meiaHora + proporcional) * 100) / 100;
+}
+
+async function abrirDetalhe(id) {
+    try {
+        const res = await fetch(`/api/chamados/${id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) { mostrarErro('Erro ao buscar chamado'); return; }
+        const c = await res.json();
+        document.getElementById('modalTitulo').textContent = `${c.numero} - ${c.titulo}`;
+
+        // ========== TIMELINE DO HISTÓRICO ==========
+        let historicoHtml = '';
+        if (c.historicos && c.historicos.length > 0) {
+            // Ordena do mais recente para o mais antigo (usa data_atendimento se tiver, senão criado_em)
+            const historicos = [...c.historicos].sort((a, b) => {
+                const da = new Date(a.data_atendimento || a.criado_em);
+                const db_ = new Date(b.data_atendimento || b.criado_em);
+                return db_ - da;
+            });
+
+            historicoHtml = '<div class="timeline">' + historicos.map(h => {
+                const ehTecnico = c.tipo_servico === 'suporte_tecnico';
+                const dataAtend = h.data_atendimento || h.criado_em;
+                const dataFmt = formatarDataSimples(dataAtend);
+
+                // Horário (só pra suporte usuário e se tiver preenchido)
+                let horarioHtml = '';
+                if (!ehTecnico && h.hora_inicio && h.hora_termino) {
+                    horarioHtml = `<span class="timeline-horario">🕐 ${h.hora_inicio} → ${h.hora_termino}</span>`;
+                }
+
+                // Duração / Quantidade
+                let duracaoHtml = '';
+                if (h.tempo_minutos && h.tempo_minutos > 0) {
+                    if (ehTecnico) {
+                        duracaoHtml = `<span class="timeline-duracao tecnico">📦 ${h.tempo_minutos} un</span>`;
+                    } else {
+                        duracaoHtml = `<span class="timeline-duracao">⏱️ ${formatarTempo(h.tempo_minutos)}</span>`;
+                    }
+                }
+
+                // Descricao escapada + replace de aspas para o onclick funcionar
+                const descEscapada = (h.descricao || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+
+                return `
+                    <div class="timeline-item ${ehTecnico ? 'tecnico' : ''}">
+                        <div class="timeline-header">
+                            <div class="timeline-data-hora">
+                                <span class="timeline-data">📅 ${dataFmt}</span>
+                                ${horarioHtml}
+                                ${duracaoHtml}
+                            </div>
+                        </div>
+                        <div class="timeline-user">Por <strong>${h.usuario_nome || 'Usuário'}</strong> · registrado em ${formatarData(h.criado_em)}</div>
+                        <div class="timeline-desc">${h.descricao || ''}</div>
+                        <div class="timeline-actions">
+                            <button class="btn btn-warning btn-sm" onclick="abrirEditorHistorico(${c.id}, ${h.id})">✏️ Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deletarHistorico(${c.id}, ${h.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('') + '</div>';
+        } else {
+            historicoHtml = '<p style="color:#999; text-align:center; padding:15px;">Nenhum registro ainda</p>';
+        }
+
+        // ========== INFO DO TIPO DE SERVIÇO ==========
+        let tipoInfo = '';
+        if (c.tipo_servico === 'suporte_tecnico') {
+            // Se tem valor (chamado finalizado), mostra valor unitário; senão, mostra "A definir"
+            const valorInfo = (c.valor_fixo && c.valor_fixo > 0)
+                ? `<div class="value" style="color:#27ae60; font-weight:700;">${formatarValor(c.valor_fixo)} / un</div>`
+                : `<div class="value" style="color:#999; font-style:italic;">A definir ao finalizar</div>`;
+
+            tipoInfo = `
+                <div class="detail-item">
+                    <label>Serviço Técnico</label>
+                    <div class="value">${c.servico_tecnico_nome || c.servico_tecnico || '-'}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Valor Unitário</label>
+                    ${valorInfo}
+                </div>
+            `;
+        }
+
+        // ========== BOX DE RESUMO FINANCEIRO ==========
+        // Só mostra para admins (a API só devolve valores para admin)
+        const ehAdmin = (c.valor_total !== undefined);
+        let resumoFinanceiroHtml = '';
+
+        if (ehAdmin && c.tipo_servico === 'suporte_usuario') {
+            const valorHora = c.cliente_valor_hora || 0;
+            const totalMin = c.tempo_gasto_minutos || 0;
+            resumoFinanceiroHtml = `
+                <div class="resumo-financeiro">
+                    <div class="resumo-item">
+                        <div class="rf-label">Tempo Total</div>
+                        <div class="rf-valor">${formatarTempo(totalMin) || '0min'}</div>
+                        <div class="rf-sub">${c.historicos.length} atendimento${c.historicos.length !== 1 ? 's' : ''}</div>
+                    </div>
+                    <div class="resumo-item">
+                        <div class="rf-label">Valor/Hora</div>
+                        <div class="rf-valor laranja">${formatarValor(valorHora)}</div>
+                        <div class="rf-sub">conforme cadastro do cliente</div>
+                    </div>
+                    <div class="resumo-item">
+                        <div class="rf-label">Regra de Cobrança</div>
+                        <div class="rf-valor pequeno">Meia hora<br>+ proporcional</div>
+                        <div class="rf-sub">acima de 30min</div>
+                    </div>
+                    <div class="resumo-item">
+                        <div class="rf-label">Valor a Faturar</div>
+                        <div class="rf-valor verde">${formatarValor(c.valor_total)}</div>
+                        <div class="rf-sub">até o momento</div>
+                    </div>
+                </div>
+            `;
+        } else if (ehAdmin && c.tipo_servico === 'suporte_tecnico') {
+            // Técnico: só mostra box se já foi finalizado com valor
+            if (c.status === 'finalizado' && (c.valor_total || 0) > 0) {
+                const qtd = c.tempo_gasto_minutos || 0;
+                resumoFinanceiroHtml = `
+                    <div class="resumo-financeiro">
+                        <div class="resumo-item">
+                            <div class="rf-label">Quantidade</div>
+                            <div class="rf-valor">${qtd} un</div>
+                            <div class="rf-sub">${c.historicos.length} registro${c.historicos.length !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="rf-label">Valor Unitário</div>
+                            <div class="rf-valor laranja">${formatarValor(c.valor_fixo)}</div>
+                            <div class="rf-sub">definido pelo admin</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="rf-label">Cálculo</div>
+                            <div class="rf-valor pequeno">Qtd × Valor<br>Unitário</div>
+                            <div class="rf-sub">serviço técnico</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="rf-label">Valor Faturado</div>
+                            <div class="rf-valor verde">${formatarValor(c.valor_total)}</div>
+                            <div class="rf-sub">finalizado</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Chamado técnico ainda aberto/em atendimento: avisa admin
+                const qtd = c.tempo_gasto_minutos || 0;
+                resumoFinanceiroHtml = `
+                    <div class="resumo-financeiro" style="background: linear-gradient(135deg, #fff9e6, #fff3cd); border-color: #f39c12;">
+                        <div class="resumo-item">
+                            <div class="rf-label">Status financeiro</div>
+                            <div class="rf-valor pequeno" style="color: #f39c12;">Aguardando<br>finalização</div>
+                            <div class="rf-sub">valor será definido ao finalizar</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="rf-label">Quantidade registrada</div>
+                            <div class="rf-valor">${qtd}</div>
+                            <div class="rf-sub">${c.historicos.length} registro${c.historicos.length !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="resumo-item" style="grid-column: span 2;">
+                            <div class="rf-label">Ação necessária</div>
+                            <div class="rf-valor pequeno" style="color: #667eea;">Clique em "✅ Finalizar"<br>para definir valor</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ========== FORMULÁRIO DE ADICIONAR ==========
+        let formHtml = '';
+        if (c.tipo_servico === 'suporte_usuario') {
+            // Formulário completo com 2 modos para suporte ao usuário
+            formHtml = `
+                <div class="historico-form">
+                    <h5>➕ Adicionar novo atendimento</h5>
+
+                    <div class="modo-toggle">
+                        <button type="button" id="modoHorario_${c.id}" class="active" onclick="trocarModo(${c.id}, 'horario')">🕐 Por horário (início/fim)</button>
+                        <button type="button" id="modoDireto_${c.id}" onclick="trocarModo(${c.id}, 'direto')">⏱️ Por tempo direto (minutos)</button>
+                    </div>
+
+                    <!-- MODO 1: HORÁRIO -->
+                    <div id="bloco_horario_${c.id}">
+                        <div class="form-horario">
+                            <div class="form-horario-grupo">
+                                <label>Data do atendimento</label>
+                                <input type="date" id="data_atend_${c.id}" value="${hojeDateInput()}">
+                            </div>
+                            <div class="form-horario-grupo">
+                                <label>Hora início</label>
+                                <input type="time" id="hora_ini_${c.id}" oninput="atualizarTempoCalculado(${c.id})">
+                            </div>
+                            <div class="form-horario-grupo">
+                                <label>Hora término</label>
+                                <input type="time" id="hora_fim_${c.id}" oninput="atualizarTempoCalculado(${c.id})">
+                            </div>
+                            <div class="tempo-calculado" id="tempoCalc_${c.id}">⏱️ 0min</div>
+                        </div>
+                    </div>
+
+                    <!-- MODO 2: MINUTOS DIRETOS -->
+                    <div id="bloco_direto_${c.id}" style="display:none;">
+                        <div class="form-minutos-direto">
+                            <div class="form-horario-grupo">
+                                <label>Data do atendimento</label>
+                                <input type="date" id="data_atend_d_${c.id}" value="${hojeDateInput()}">
+                            </div>
+                            <div class="form-horario-grupo">
+                                <label>Tempo gasto (minutos)</label>
+                                <input type="number" id="min_direto_${c.id}" min="0" value="30" style="width:120px;">
+                            </div>
+                            <div></div>
+                        </div>
+                    </div>
+
+                    <textarea id="histDesc_${c.id}" placeholder="Descreva o que foi feito neste atendimento..."></textarea>
+
+                    <div class="form-row-final">
+                        <span class="form-hint" id="hint_${c.id}">💡 O tempo é calculado automaticamente pela diferença entre início e término</span>
+                        <button class="btn btn-primary" onclick="adicionarHistorico(${c.id})">➕ Adicionar Atendimento</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Suporte técnico: só quantidade + descrição (mais simples, como era antes)
+            formHtml = `
+                <div class="historico-form">
+                    <h5>➕ Adicionar registro</h5>
+                    <textarea id="histDesc_${c.id}" placeholder="O que foi feito neste atendimento..."></textarea>
+                    <div class="hist-form-row" style="display:flex; gap:10px; align-items:flex-end;">
+                        <div>
+                            <label style="font-size:12px; color:#666;">Quantidade</label>
+                            <input type="number" id="histTempo_${c.id}" placeholder="1" min="1" value="1" style="width:120px; padding: 8px; border: 2px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <button class="btn btn-primary" onclick="adicionarHistorico(${c.id})">➕ Adicionar</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========== MONTA O MODAL ==========
+        document.getElementById('modalBody').innerHTML = `
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Número</label>
+                    <div class="value">${c.numero}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Status</label>
+                    <div class="value"><span class="badge badge-${c.status}">${c.status.replace('_', ' ')}</span></div>
+                </div>
+                <div class="detail-item">
+                    <label>Tipo de Serviço</label>
+                    <div class="value"><span class="badge ${tipoBadge(c.tipo_servico)}">${tipoLabel(c.tipo_servico)}</span></div>
+                </div>
+                <div class="detail-item">
+                    <label>Empresa</label>
+                    <div class="value">${c.cliente_nome || '-'}</div>
+                </div>
+                ${tipoInfo}
+                <div class="detail-item">
+                    <label>Prioridade</label>
+                    <div class="value"><span class="badge badge-${c.prioridade}">${c.prioridade}</span></div>
+                </div>
+                <div class="detail-item">
+                    <label>Categoria</label>
+                    <div class="value">${c.categoria}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Data de Abertura</label>
+                    <div class="value">${formatarData(c.criado_em)}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Data de Término</label>
+                    <div class="value">${formatarData(c.data_termino)}</div>
+                </div>
+                <div class="detail-item">
+                    <label>Técnico responsável</label>
+                    <div class="value">${c.tecnico_nome ? '🔧 ' + c.tecnico_nome : '<span style="color:#aaa;">— sem técnico —</span>'}</div>
+                </div>
+            </div>
+            <div class="detail-item" style="margin-bottom:20px;">
+                <label>Descrição do Chamado</label>
+                <div class="value" style="background:#f8f9fa; padding:12px; border-radius:6px; margin-top:5px;">${c.descricao}</div>
+            </div>
+            ${c.motivo_devolucao ? `
+                <div class="detail-item" style="margin-bottom:20px;">
+                    <label style="color:#c0392b;">⚠ Motivo da última devolução</label>
+                    <div class="value" style="background:#ffeaea; padding:12px; border-radius:6px; margin-top:5px; border-left:3px solid #c0392b;">${c.motivo_devolucao}</div>
+                </div>
+            ` : ''}
+
+            ${resumoFinanceiroHtml}
+
+            <!-- AÇÕES DE TÉCNICO (Fase 2) -->
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                ${c.status !== 'finalizado' ? `
+                    ${!c.tecnico_id
+                        ? `<button class="btn btn-success btn-sm" onclick="abrirModalAtribuir(${c.id})">👤 Atribuir técnico</button>`
+                        : `<button class="btn btn-warning btn-sm" onclick="abrirModalTransferirAdmin(${c.id})">🔄 Transferir</button>
+                           <button class="btn btn-danger btn-sm" onclick="abrirModalDevolverAdmin(${c.id})">🔙 Devolver à fila</button>`
+                    }
+                ` : ''}
+                <button class="btn btn-secondary btn-sm" onclick="abrirHistoricoTransferencias(${c.id})">📜 Histórico transferências</button>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+                ${c.status !== 'finalizado'
+                    ? (c.tipo_servico === 'suporte_tecnico'
+                        ? `<button class="btn btn-success btn-sm" onclick="abrirModalFinalizarTecnico(${c.id})">✅ Finalizar (definir valor)</button>`
+                        : `<button class="btn btn-success btn-sm" onclick="mudarStatus(${c.id}, 'finalizado')">✅ Finalizar</button>`
+                    )
+                    : ''}
+                ${c.status !== 'em_atendimento' ? `<button class="btn btn-info btn-sm" onclick="mudarStatus(${c.id}, 'em_atendimento')">🔧 Em Atendimento</button>` : ''}
+                ${c.status !== 'cancelado' ? `<button class="btn btn-danger btn-sm" onclick="mudarStatus(${c.id}, 'cancelado')">❌ Cancelar</button>` : ''}
+                ${c.status !== 'aberto' ? `<button class="btn btn-warning btn-sm" onclick="mudarStatus(${c.id}, 'aberto')">🔄 Reabrir</button>` : ''}
+                <button class="btn btn-secondary btn-sm" onclick="editarChamado(${c.id})">✏️ Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deletarChamado(${c.id})">🗑️ Excluir</button>
+            </div>
+            <div class="historico-section">
+                <h4>📝 Histórico de Atendimento <span class="historico-contador">${c.historicos.length} registro${c.historicos.length !== 1 ? 's' : ''}${c.tipo_servico === 'suporte_usuario' && c.tempo_gasto_minutos ? ' · ' + formatarTempo(c.tempo_gasto_minutos) : ''}</span></h4>
+                ${historicoHtml}
+                ${formHtml}
+            </div>
+        `;
+        document.getElementById('modalOverlay').classList.add('active');
+
+        // Guarda o tipo de serviço e os dados num elemento global para uso nas funções
+        window._chamadoAtual = c;
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// =================== MODO HORÁRIO vs MINUTOS DIRETOS ===================
+function trocarModo(chamadoId, modo) {
+    const btnH = document.getElementById(`modoHorario_${chamadoId}`);
+    const btnD = document.getElementById(`modoDireto_${chamadoId}`);
+    const blocoH = document.getElementById(`bloco_horario_${chamadoId}`);
+    const blocoD = document.getElementById(`bloco_direto_${chamadoId}`);
+    const hint = document.getElementById(`hint_${chamadoId}`);
+
+    if (modo === 'horario') {
+        btnH.classList.add('active');
+        btnD.classList.remove('active');
+        blocoH.style.display = '';
+        blocoD.style.display = 'none';
+        if (hint) hint.textContent = '💡 O tempo é calculado automaticamente pela diferença entre início e término';
+    } else {
+        btnH.classList.remove('active');
+        btnD.classList.add('active');
+        blocoH.style.display = 'none';
+        blocoD.style.display = '';
+        if (hint) hint.textContent = '💡 Use quando não lembra as horas exatas';
+    }
+    // Marca o modo selecionado num data-attribute pra leitura na hora de enviar
+    document.getElementById(`histDesc_${chamadoId}`).dataset.modo = modo;
+}
+
+function atualizarTempoCalculado(chamadoId) {
+    const ini = document.getElementById(`hora_ini_${chamadoId}`).value;
+    const fim = document.getElementById(`hora_fim_${chamadoId}`).value;
+    const box = document.getElementById(`tempoCalc_${chamadoId}`);
+
+    if (!ini || !fim) {
+        box.textContent = '⏱️ 0min';
+        box.classList.remove('invalido');
+        return;
+    }
+
+    const min = calcularMinutosEntre(ini, fim);
+    if (min <= 0) {
+        box.textContent = '⚠️ inválido';
+        box.classList.add('invalido');
+    } else {
+        box.textContent = '⏱️ ' + formatarTempo(min);
+        box.classList.remove('invalido');
+    }
+}
+
+function fecharModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) fecharModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
+
+async function mudarStatus(id, status) {
+    const label = { 'finalizado': 'finalizar', 'cancelado': 'cancelar', 'aberto': 'reabrir', 'em_atendimento': 'mover para atendimento' };
+    if (!confirm(`Deseja ${label[status]} este chamado?`)) return;
+    try {
+        const res = await fetch(`/api/chamados/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ status }) });
+        if (res.ok) { mostrarSucesso('Status atualizado!'); carregarChamados(); abrirDetalhe(id); }
+        else { mostrarErro('Erro ao atualizar'); }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+async function editarChamado(id) {
+    fecharModal();
+    const c = todosChamados.find(ch => ch.id === id);
+    if (!c) return;
+    document.getElementById('titulo').value = c.titulo;
+    document.getElementById('descricao').value = c.descricao;
+    document.getElementById('categoria').value = c.categoria;
+    document.getElementById('prioridade').value = c.prioridade;
+    document.getElementById('cliente_id').value = c.cliente_id || '';
+
+    selecionarTipo(c.tipo_servico || 'suporte_usuario');
+
+    // Restaurar seleção de serviço técnico, se aplicável
+    if (c.tipo_servico === 'suporte_tecnico') {
+        setTimeout(() => {
+            // Aguarda o combobox carregar os serviços antes de tentar restaurar
+            const aplicar = () => {
+                if (c.servico_id) {
+                    // Serviço do catálogo
+                    selecionarServicoCombobox(c.servico_id);
+                } else if (c.servico_tecnico) {
+                    // Serviço personalizado (texto livre)
+                    ativarServicoCustom();
+                    document.getElementById('servicoCustomNome').value = c.servico_tecnico;
+                    document.getElementById('servico_tecnico').value = c.servico_tecnico;
+                }
+            };
+            if (servicosTecnicos.length > 0) {
+                aplicar();
+            } else {
+                // Dá um tempo para carregarServicos terminar
+                setTimeout(aplicar, 300);
+            }
+        }, 100);
+    }
+
+    editandoId = id;
+    document.getElementById('formTitle').textContent = `✏️ Editando: ${c.numero}`;
+    document.getElementById('btnSalvar').textContent = '✓ Atualizar Chamado';
+    document.getElementById('btnCancelar').style.display = 'inline-block';
+    document.getElementById('cardForm').classList.add('editing-mode');
+    document.getElementById('cardForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function deletarChamado(id) {
+    if (!confirm('Excluir este chamado e todo histórico?')) return;
+    try {
+        const res = await fetch(`/api/chamados/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (res.ok) { mostrarSucesso('Chamado excluído!'); fecharModal(); carregarChamados(); }
+        else { mostrarErro('Erro ao excluir'); }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// =================== HISTÓRICO ===================
+async function adicionarHistorico(chamadoId) {
+    const c = window._chamadoAtual;
+    const descricao = document.getElementById(`histDesc_${chamadoId}`).value.trim();
+
+    if (!descricao) { mostrarErro('Descreva o que foi feito!'); return; }
+
+    let payload = { descricao };
+
+    if (c && c.tipo_servico === 'suporte_usuario') {
+        // Detecta modo ativo
+        const modoHorarioAtivo = document.getElementById(`modoHorario_${chamadoId}`).classList.contains('active');
+
+        if (modoHorarioAtivo) {
+            const data = document.getElementById(`data_atend_${chamadoId}`).value;
+            const ini = document.getElementById(`hora_ini_${chamadoId}`).value;
+            const fim = document.getElementById(`hora_fim_${chamadoId}`).value;
+
+            if (!data) { mostrarErro('Informe a data do atendimento!'); return; }
+            if (!ini || !fim) { mostrarErro('Informe hora de início e término!'); return; }
+
+            const min = calcularMinutosEntre(ini, fim);
+            if (min <= 0) { mostrarErro('Horário inválido: término precisa ser depois do início!'); return; }
+
+            payload.data_atendimento = data;
+            payload.hora_inicio = ini;
+            payload.hora_termino = fim;
+            payload.tempo_minutos = min; // backend também recalcula, mas mandamos pra garantir
+        } else {
+            // Modo minutos direto
+            const data = document.getElementById(`data_atend_d_${chamadoId}`).value;
+            const min = parseInt(document.getElementById(`min_direto_${chamadoId}`).value) || 0;
+
+            if (!data) { mostrarErro('Informe a data do atendimento!'); return; }
+            if (min <= 0) { mostrarErro('Informe o tempo em minutos!'); return; }
+
+            payload.data_atendimento = data;
+            payload.tempo_minutos = min;
+        }
+    } else {
+        // Suporte técnico: quantidade
+        const qtd = parseInt(document.getElementById(`histTempo_${chamadoId}`).value) || 0;
+        if (qtd <= 0) { mostrarErro('Informe a quantidade!'); return; }
+        payload.tempo_minutos = qtd;
+    }
+
+    try {
+        const res = await fetch(`/api/chamados/${chamadoId}/historico`, {
+            method: 'POST', headers: authHeaders(), body: JSON.stringify(payload)
+        });
+        if (res.ok) { mostrarSucesso('Registro adicionado!'); carregarChamados(); abrirDetalhe(chamadoId); }
+        else { const e = await res.json(); mostrarErro(e.detail || 'Erro'); }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// ========== EDITOR DE HISTÓRICO (MODAL DENTRO DE MODAL) ==========
+function abrirEditorHistorico(chamadoId, histId) {
+    const c = window._chamadoAtual;
+    const h = c.historicos.find(x => x.id === histId);
+    if (!h) { mostrarErro('Histórico não encontrado'); return; }
+
+    const ehTecnico = c.tipo_servico === 'suporte_tecnico';
+
+    let modalHtml = '';
+    if (ehTecnico) {
+        // Suporte técnico: edita só descrição e quantidade (modal simples com prompts)
+        const novaDesc = prompt('Editar descrição:', h.descricao || '');
+        if (novaDesc === null) return;
+        const novaQtd = prompt('Quantidade:', h.tempo_minutos || 1);
+        if (novaQtd === null) return;
+        enviarEdicaoHistorico(chamadoId, histId, {
+            descricao: novaDesc,
+            tempo_minutos: parseInt(novaQtd) || 1,
+        });
+        return;
+    }
+
+    // Suporte ao usuário: modal completo com horários
+    const dataInput = isoParaDateInput(h.data_atendimento || h.criado_em);
+    const horaIni = h.hora_inicio || '';
+    const horaFim = h.hora_termino || '';
+    const minAtual = h.tempo_minutos || 0;
+    const temHorario = !!(horaIni && horaFim);
+
+    // Cria overlay dinâmico
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.style.zIndex = '2000';
+    overlay.innerHTML = `
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>✏️ Editar Atendimento</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modo-toggle" style="margin-bottom:15px;">
+                    <button type="button" id="editModoHorario" class="${temHorario ? 'active' : ''}" onclick="trocarModoEdicao('horario')">🕐 Por horário</button>
+                    <button type="button" id="editModoDireto" class="${!temHorario ? 'active' : ''}" onclick="trocarModoEdicao('direto')">⏱️ Por minutos</button>
+                </div>
+
+                <div id="editBlocoHorario" style="display:${temHorario ? '' : 'none'};">
+                    <div class="form-horario">
+                        <div class="form-horario-grupo">
+                            <label>Data do atendimento</label>
+                            <input type="date" id="editData" value="${dataInput}">
+                        </div>
+                        <div class="form-horario-grupo">
+                            <label>Hora início</label>
+                            <input type="time" id="editHoraIni" value="${horaIni}" oninput="atualizarTempoEdicao()">
+                        </div>
+                        <div class="form-horario-grupo">
+                            <label>Hora término</label>
+                            <input type="time" id="editHoraFim" value="${horaFim}" oninput="atualizarTempoEdicao()">
+                        </div>
+                        <div class="tempo-calculado" id="editTempoCalc">⏱️ ${formatarTempo(minAtual)}</div>
+                    </div>
+                </div>
+
+                <div id="editBlocoDireto" style="display:${temHorario ? 'none' : ''};">
+                    <div class="form-minutos-direto">
+                        <div class="form-horario-grupo">
+                            <label>Data do atendimento</label>
+                            <input type="date" id="editDataD" value="${dataInput}">
+                        </div>
+                        <div class="form-horario-grupo">
+                            <label>Tempo (minutos)</label>
+                            <input type="number" id="editMinDireto" value="${minAtual}" min="0" style="width:120px;">
+                        </div>
+                        <div></div>
+                    </div>
+                </div>
+
+                <label style="font-size:12px; color:#666; font-weight:600; margin-top:10px; display:block;">Descrição:</label>
+                <textarea id="editDesc" style="width:100%; padding:10px; border:2px solid #ddd; border-radius:6px; min-height:80px; font-family:inherit; margin-top:5px;">${h.descricao || ''}</textarea>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:15px;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="salvarEdicaoHistorico(${chamadoId}, ${histId})">💾 Salvar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function trocarModoEdicao(modo) {
+    const btnH = document.getElementById('editModoHorario');
+    const btnD = document.getElementById('editModoDireto');
+    const blH = document.getElementById('editBlocoHorario');
+    const blD = document.getElementById('editBlocoDireto');
+    if (modo === 'horario') {
+        btnH.classList.add('active'); btnD.classList.remove('active');
+        blH.style.display = ''; blD.style.display = 'none';
+    } else {
+        btnH.classList.remove('active'); btnD.classList.add('active');
+        blH.style.display = 'none'; blD.style.display = '';
+    }
+}
+
+function atualizarTempoEdicao() {
+    const ini = document.getElementById('editHoraIni').value;
+    const fim = document.getElementById('editHoraFim').value;
+    const box = document.getElementById('editTempoCalc');
+    if (!ini || !fim) {
+        box.textContent = '⏱️ 0min';
+        box.classList.remove('invalido');
+        return;
+    }
+    const min = calcularMinutosEntre(ini, fim);
+    if (min <= 0) {
+        box.textContent = '⚠️ inválido';
+        box.classList.add('invalido');
+    } else {
+        box.textContent = '⏱️ ' + formatarTempo(min);
+        box.classList.remove('invalido');
+    }
+}
+
+async function salvarEdicaoHistorico(chamadoId, histId) {
+    const modoHorarioAtivo = document.getElementById('editModoHorario').classList.contains('active');
+    const desc = document.getElementById('editDesc').value.trim();
+    if (!desc) { mostrarErro('Descrição não pode ficar vazia'); return; }
+
+    let payload = { descricao: desc };
+
+    if (modoHorarioAtivo) {
+        const data = document.getElementById('editData').value;
+        const ini = document.getElementById('editHoraIni').value;
+        const fim = document.getElementById('editHoraFim').value;
+        if (!data || !ini || !fim) { mostrarErro('Preencha data, início e término!'); return; }
+        const min = calcularMinutosEntre(ini, fim);
+        if (min <= 0) { mostrarErro('Horário inválido!'); return; }
+        payload.data_atendimento = data;
+        payload.hora_inicio = ini;
+        payload.hora_termino = fim;
+        payload.tempo_minutos = min;
+    } else {
+        const data = document.getElementById('editDataD').value;
+        const min = parseInt(document.getElementById('editMinDireto').value) || 0;
+        if (!data) { mostrarErro('Informe a data!'); return; }
+        if (min <= 0) { mostrarErro('Informe o tempo em minutos!'); return; }
+        payload.data_atendimento = data;
+        payload.tempo_minutos = min;
+        payload.hora_inicio = null;
+        payload.hora_termino = null;
+    }
+
+    enviarEdicaoHistorico(chamadoId, histId, payload);
+}
+
+async function enviarEdicaoHistorico(chamadoId, histId, payload) {
+    try {
+        const res = await fetch(`/api/chamados/${chamadoId}/historico/${histId}`, {
+            method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            mostrarSucesso('Atualizado!');
+            // Fecha modal de edição se existir
+            const modais = document.querySelectorAll('.modal-overlay');
+            modais.forEach(m => { if (m.style.zIndex === '2000') m.remove(); });
+            carregarChamados();
+            abrirDetalhe(chamadoId);
+        } else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao atualizar');
+        }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+async function deletarHistorico(chamadoId, histId) {
+    if (!confirm('Excluir este registro?')) return;
+    try {
+        const res = await fetch(`/api/chamados/${chamadoId}/historico/${histId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (res.ok) { mostrarSucesso('Excluído!'); carregarChamados(); abrirDetalhe(chamadoId); }
+        else { mostrarErro('Erro'); }
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+function logout() { localStorage.removeItem('token'); localStorage.removeItem('access_token'); window.location.href = '/'; }
+
+// =================== MODAL DE FINALIZAÇÃO TÉCNICA ===================
+function abrirModalFinalizarTecnico(chamadoId) {
+    const c = window._chamadoAtual;
+    if (!c) { mostrarErro('Chamado não carregado'); return; }
+    if (c.tipo_servico !== 'suporte_tecnico') {
+        mostrarErro('Esta finalização é só para chamados técnicos');
+        return;
+    }
+
+    // Valor padrão sugerido vem do serviço cadastrado (se houver)
+    const valorSugerido = c.servico_valor_padrao || 0;
+    // Quantidade vem da soma do histórico (campo tempo_gasto_minutos é dupla-função)
+    const qtdSugerida = (c.tempo_gasto_minutos && c.tempo_gasto_minutos > 0) ? c.tempo_gasto_minutos : 1;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.style.zIndex = '2000';
+    overlay.id = 'modalFinalizarTecnico';
+    overlay.innerHTML = `
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>💰 Finalizar Chamado Técnico</h3>
+                <button class="modal-close" onclick="fecharModalFinalizarTecnico()">&times;</button>
+            </div>
+            <div class="modal-body">
+
+                <div class="finalizar-box">
+                    <h4>📋 Resumo do chamado</h4>
+                    <div class="sub-titulo">${c.numero} — ${escapeHTMLstr(c.titulo)}</div>
+
+                    <div class="finalizar-info">
+                        <div class="linha">
+                            <span class="lbl">Serviço prestado:</span>
+                            <span class="val">${escapeHTMLstr(c.servico_tecnico_nome || c.servico_tecnico || '-')}</span>
+                        </div>
+                        <div class="linha">
+                            <span class="lbl">Cliente:</span>
+                            <span class="val">${escapeHTMLstr(c.cliente_nome || '-')}</span>
+                        </div>
+                        <div class="linha">
+                            <span class="lbl">Quantidade registrada:</span>
+                            <span class="val">${qtdSugerida} ${qtdSugerida === 1 ? 'unidade' : 'unidades'}</span>
+                        </div>
+                        <div class="linha">
+                            <span class="lbl">Valor padrão sugerido:</span>
+                            <span class="val" style="color:#f39c12;">${valorSugerido > 0 ? formatarValor(valorSugerido) + ' / un' : 'Não definido'}</span>
+                        </div>
+                        <div class="linha">
+                            <span class="lbl">Atendimentos:</span>
+                            <span class="val">${c.historicos.length}</span>
+                        </div>
+                    </div>
+
+                    <div class="calc-valor-box">
+                        <div class="calc-grid">
+                            <div>
+                                <label>Valor unitário (R$)</label>
+                                <input type="number" id="finValorUnitario" value="${valorSugerido.toFixed(2)}" step="0.01" min="0" oninput="atualizarCalcFinalizar()">
+                            </div>
+                            <div class="operador">×</div>
+                            <div>
+                                <label>Quantidade</label>
+                                <input type="number" id="finQuantidade" value="${qtdSugerida}" min="1" oninput="atualizarCalcFinalizar()">
+                            </div>
+                        </div>
+
+                        <div class="resultado">
+                            <div class="resultado-label">Valor total a faturar</div>
+                            <div class="resultado-valor" id="finResultado">${formatarValor(valorSugerido * qtdSugerida)}</div>
+                        </div>
+                    </div>
+
+                    <div class="finalizar-dica">
+                        💡 <strong>Dica:</strong> O valor padrão do serviço foi pré-preenchido. Você pode ajustar se necessário (desconto, valor especial, etc.). A quantidade vem dos registros do histórico.
+                    </div>
+
+                    <div class="finalizar-btns">
+                        <button class="btn btn-secondary" onclick="fecharModalFinalizarTecnico()">Cancelar</button>
+                        <button class="btn btn-success" onclick="confirmarFinalizarTecnico(${chamadoId})">✓ Finalizar com este valor</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) fecharModalFinalizarTecnico();
+    });
+}
+
+function fecharModalFinalizarTecnico() {
+    const m = document.getElementById('modalFinalizarTecnico');
+    if (m) m.remove();
+}
+
+function atualizarCalcFinalizar() {
+    const v = parseFloat(document.getElementById('finValorUnitario').value) || 0;
+    const q = parseInt(document.getElementById('finQuantidade').value) || 0;
+    const total = v * q;
+    document.getElementById('finResultado').textContent = formatarValor(total);
+}
+
+async function confirmarFinalizarTecnico(chamadoId) {
+    const valor = parseFloat(document.getElementById('finValorUnitario').value) || 0;
+    const qtd = parseInt(document.getElementById('finQuantidade').value) || 0;
+
+    if (valor < 0) { mostrarErro('Valor unitário não pode ser negativo'); return; }
+    if (qtd < 1) { mostrarErro('Quantidade precisa ser pelo menos 1'); return; }
+
+    if (valor === 0) {
+        if (!confirm('Valor unitário está zerado. Confirma finalizar com R$ 0,00?')) return;
+    }
+
+    try {
+        const res = await fetch(`/api/chamados/${chamadoId}/finalizar-tecnico`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ valor_unitario: valor, quantidade: qtd })
+        });
+        if (res.ok) {
+            mostrarSucesso('Chamado finalizado com sucesso!');
+            fecharModalFinalizarTecnico();
+            carregarChamados();
+            abrirDetalhe(chamadoId);
+        } else {
+            const e = await res.json();
+            mostrarErro(e.detail || 'Erro ao finalizar');
+        }
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!getToken()) { window.location.href = '/'; return; }
+    carregarClientes();
+    carregarChamados();
+});
+
+// =================== GUARDA ADMIN (redireciona não-admins) ===================
+(async function() {
+    try {
+        const t = localStorage.getItem('token') || localStorage.getItem('access_token');
+        if (!t) { window.location.href = '/'; return; }
+        const r = await fetch('/api/usuario-logado', { headers: { 'Authorization': 'Bearer ' + t } });
+        if (!r.ok) { window.location.href = '/'; return; }
+        const u = await r.json();
+        const ehAdmin = u.is_admin || u.tipo_usuario === 'admin';
+        if (!ehAdmin) {
+            // Técnico → painel; Cliente → portal; outro → login
+            if (u.tipo_usuario === 'tecnico') window.location.href = '/tecnico/painel';
+            else if (u.tipo_usuario === 'cliente') window.location.href = '/cliente/painel';
+            else window.location.href = '/';
+            return;
+        }
+        // É admin — mostra os links admin-only
+        const link = document.getElementById('linkUsuariosAdmin');
+        if (link) link.style.display = '';
+        const linkCom = document.getElementById('linkComissaoAdmin');
+        if (linkCom) linkCom.style.display = '';
+    } catch(e) { window.location.href = '/'; }
+})();
+
+// ============================================================
+// FASE 2 - ADMIN: Atribuir/Transferir/Devolver + histórico transf
+// ============================================================
+let _f2ChamadoId = null;
+let _f2Tecnicos = [];
+
+async function _f2CarregarTecnicos() {
+    try {
+        const r = await fetch('/api/usuarios/tecnicos', {
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        _f2Tecnicos = r.ok ? await r.json() : [];
+    } catch (e) { _f2Tecnicos = []; }
+}
+
+function _f2Popular(selId, excluirId = null) {
+    const sel = document.getElementById(selId);
+    const opts = _f2Tecnicos
+        .filter(t => t.id !== excluirId)
+        .map(t => `<option value="${t.id}">${t.nome}${t.pode_ver_fila_aberta ? ' ✅' : ''}</option>`)
+        .join('');
+    sel.innerHTML = '<option value="">— Selecione —</option>' + opts;
+}
+
+async function abrirModalAtribuir(id) {
+    _f2ChamadoId = id;
+    await _f2CarregarTecnicos();
+    _f2Popular('f2AtribTec');
+    document.getElementById('f2ModalAtrib').classList.add('active');
+}
+
+async function confirmarAtribuir() {
+    const tid = parseInt(document.getElementById('f2AtribTec').value);
+    if (!tid) { mostrarErro('Selecione um técnico'); return; }
+    try {
+        const r = await fetch(`/api/chamados/${_f2ChamadoId}/atribuir`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tecnico_id: tid })
+        });
+        if (r.ok) {
+            mostrarSucesso('Técnico atribuído!');
+            document.getElementById('f2ModalAtrib').classList.remove('active');
+            carregarChamados();
+            abrirDetalhe(_f2ChamadoId);
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+async function abrirModalTransferirAdmin(id) {
+    _f2ChamadoId = id;
+    await _f2CarregarTecnicos();
+    const c = window._chamadoAtual;
+    _f2Popular('f2TransfTec', c ? c.tecnico_id : null);
+    document.getElementById('f2TransfMotivo').value = '';
+    document.getElementById('f2ModalTransf').classList.add('active');
+}
+
+async function confirmarTransferirAdmin() {
+    const tid = parseInt(document.getElementById('f2TransfTec').value);
+    const mot = document.getElementById('f2TransfMotivo').value.trim();
+    if (!tid) { mostrarErro('Selecione um técnico destino'); return; }
+    if (!mot) { mostrarErro('Motivo é obrigatório'); return; }
+    try {
+        const r = await fetch(`/api/chamados/${_f2ChamadoId}/transferir`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tecnico_id: tid, motivo: mot })
+        });
+        if (r.ok) {
+            mostrarSucesso('Chamado transferido!');
+            document.getElementById('f2ModalTransf').classList.remove('active');
+            carregarChamados();
+            abrirDetalhe(_f2ChamadoId);
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+function abrirModalDevolverAdmin(id) {
+    _f2ChamadoId = id;
+    document.getElementById('f2DevMotivo').value = '';
+    document.getElementById('f2ModalDev').classList.add('active');
+}
+
+async function confirmarDevolverAdmin() {
+    const mot = document.getElementById('f2DevMotivo').value.trim();
+    if (mot.length < 10) { mostrarErro('Motivo precisa ter no mínimo 10 caracteres'); return; }
+    try {
+        const r = await fetch(`/api/chamados/${_f2ChamadoId}/devolver`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ motivo: mot })
+        });
+        if (r.ok) {
+            mostrarSucesso('Chamado devolvido à fila');
+            document.getElementById('f2ModalDev').classList.remove('active');
+            carregarChamados();
+            abrirDetalhe(_f2ChamadoId);
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+async function abrirHistoricoTransferencias(id) {
+    _f2ChamadoId = id;
+    const box = document.getElementById('f2TransfList');
+    box.innerHTML = 'Carregando...';
+    document.getElementById('f2ModalHist').classList.add('active');
+    try {
+        const r = await fetch(`/api/chamados/${id}/transferencias`, {
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const ts = r.ok ? await r.json() : [];
+        if (!ts.length) { box.innerHTML = '<em style="color:#888;">Nenhuma transferência registrada.</em>'; return; }
+        box.innerHTML = ts.map(t => `
+            <div style="background:#f8f9fa; padding:10px 12px; border-radius:6px; margin-bottom:8px; border-left:3px solid #764ba2;">
+                <div style="font-size:13px;">
+                    <strong>${t.de_usuario_nome || '(fila aberta)'}</strong> → <strong>${t.para_usuario_nome || '(fila aberta)'}</strong>
+                </div>
+                <div style="font-size:12px; color:#666; margin-top:3px;">${t.motivo || ''}</div>
+                <div style="font-size:11px; color:#999; margin-top:3px;">${formatarData(t.criado_em)}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        box.innerHTML = '<em style="color:#c00;">Erro ao carregar histórico</em>';
+    }
+}
+
+function f2Fechar(id) { document.getElementById(id).classList.remove('active'); }
+</script>
+<!-- ============ MODAIS FASE 2 ADMIN ============ -->
+<div id="f2ModalAtrib" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:12px; width:90%; max-width:480px; padding:25px;">
+        <h3 style="color:#333; font-size:18px; margin-bottom:15px;">👤 Atribuir técnico</h3>
+        <label style="font-size:12px; color:#666; font-weight:600;">Técnico *</label>
+        <select id="f2AtribTec" style="width:100%; padding:9px; border:2px solid #e0e0e0; border-radius:6px; margin-bottom:15px;"></select>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn btn-secondary btn-sm" onclick="f2Fechar('f2ModalAtrib')">Cancelar</button>
+            <button class="btn btn-success btn-sm" onclick="confirmarAtribuir()">✅ Atribuir</button>
+        </div>
+    </div>
+</div>
+
+<div id="f2ModalTransf" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:12px; width:90%; max-width:480px; padding:25px;">
+        <h3 style="color:#333; font-size:18px; margin-bottom:15px;">🔄 Transferir chamado</h3>
+        <label style="font-size:12px; color:#666; font-weight:600;">Técnico destino *</label>
+        <select id="f2TransfTec" style="width:100%; padding:9px; border:2px solid #e0e0e0; border-radius:6px; margin-bottom:12px;"></select>
+        <label style="font-size:12px; color:#666; font-weight:600;">Motivo *</label>
+        <textarea id="f2TransfMotivo" style="width:100%; padding:9px; border:2px solid #e0e0e0; border-radius:6px; min-height:70px; margin-bottom:15px;" placeholder="Motivo da transferência"></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn btn-secondary btn-sm" onclick="f2Fechar('f2ModalTransf')">Cancelar</button>
+            <button class="btn btn-warning btn-sm" onclick="confirmarTransferirAdmin()">🔄 Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div id="f2ModalDev" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:12px; width:90%; max-width:480px; padding:25px;">
+        <h3 style="color:#333; font-size:18px; margin-bottom:15px;">🔙 Devolver à fila aberta</h3>
+        <div style="background:#fff9c4; padding:10px; border-radius:6px; font-size:13px; margin-bottom:12px; border-left:3px solid #f39c12;">
+            O chamado voltará pra fila aberta e perderá o técnico atual.
+        </div>
+        <label style="font-size:12px; color:#666; font-weight:600;">Motivo (mín. 10 chars) *</label>
+        <textarea id="f2DevMotivo" style="width:100%; padding:9px; border:2px solid #e0e0e0; border-radius:6px; min-height:70px; margin-bottom:15px;" placeholder="Explique por que está devolvendo"></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn btn-secondary btn-sm" onclick="f2Fechar('f2ModalDev')">Cancelar</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmarDevolverAdmin()">🔙 Devolver</button>
+        </div>
+    </div>
+</div>
+
+<div id="f2ModalHist" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:12px; width:90%; max-width:560px; padding:25px; max-height:85vh; overflow-y:auto;">
+        <h3 style="color:#333; font-size:18px; margin-bottom:15px;">📜 Histórico de transferências</h3>
+        <div id="f2TransfList">Carregando...</div>
+        <div style="display:flex; justify-content:flex-end; margin-top:15px;">
+            <button class="btn btn-secondary btn-sm" onclick="f2Fechar('f2ModalHist')">Fechar</button>
+        </div>
+    </div>
+</div>
+<style>
+#f2ModalAtrib.active, #f2ModalTransf.active, #f2ModalDev.active, #f2ModalHist.active { display:flex !important; }
+</style>
+
+</body>
+</html>

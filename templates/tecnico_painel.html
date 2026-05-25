@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel do Técnico - Help Desk</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; }
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 22px; }
+header nav { display: flex; gap: 10px; align-items: center; }
+header nav a {
+    color: white; text-decoration: none; padding: 8px 14px;
+    border-radius: 6px; background: rgba(255,255,255,0.15);
+    font-size: 14px; transition: background 0.3s;
+}
+header nav a:hover, header nav a.active { background: rgba(255,255,255,0.3); }
+header nav .nome-user {
+    font-size: 13px; opacity: 0.9; padding: 0 8px; border-right: 1px solid rgba(255,255,255,0.3);
+}
+.btn-logout {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+.card {
+    background: white; padding: 25px; border-radius: 10px;
+    margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.card h3 {
+    color: #333; margin-bottom: 20px; font-size: 18px;
+    border-bottom: 2px solid #667eea; padding-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px; margin-bottom: 20px;
+}
+.stat-card {
+    background: white; padding: 20px; border-radius: 10px; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-top: 4px solid #ccc;
+}
+.stat-card .num { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+.stat-card .label { font-size: 13px; color: #777; }
+.stat-card.ativos { border-top-color: #3498db; } .stat-card.ativos .num { color: #3498db; }
+.stat-card.atend { border-top-color: #f39c12; } .stat-card.atend .num { color: #f39c12; }
+.stat-card.fila { border-top-color: #27ae60; } .stat-card.fila .num { color: #27ae60; }
+.stat-card.tempo { border-top-color: #9b59b6; } .stat-card.tempo .num { color: #9b59b6; font-size: 22px; padding-top: 8px;}
+
+.btn {
+    padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.3s;
+}
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-success { background: #27ae60; color: white; }
+.btn-warning { background: #f39c12; color: white; }
+.btn-danger  { background: #e74c3c; color: white; }
+.btn-info    { background: #3498db; color: white; }
+.btn-secondary { background: #e0e0e0; color: #555; }
+.btn:hover { transform: translateY(-1px); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.table-wrapper {
+    border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;
+    overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fa; }
+th {
+    padding: 12px 15px; text-align: left; color: #666; font-weight: 600;
+    font-size: 12px; border-bottom: 2px solid #e0e0e0; text-transform: uppercase;
+}
+td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+tr:hover { background: #f9f9ff; }
+tr:last-child td { border-bottom: none; }
+
+.status-badge, .prio-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+}
+.status-aberto     { background: #d1ecf1; color: #0c5460; }
+.status-atribuido  { background: #fff3cd; color: #856404; }
+.status-em_atendimento { background: #ffe5cc; color: #8a3a00; }
+.status-finalizado { background: #d4edda; color: #155724; }
+.prio-baixa   { background: #e8f5e9; color: #2e7d32; }
+.prio-media   { background: #fff9c4; color: #827717; }
+.prio-alta    { background: #ffccbc; color: #bf360c; }
+.prio-urgente { background: #ffcdd2; color: #b71c1c; }
+
+.acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.empty { text-align: center; padding: 40px; color: #999; }
+.rodape-info {
+    text-align: center; color: #999; font-size: 13px;
+    padding: 15px; margin-top: 10px;
+}
+.alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; display: none; }
+.alert-success { background: #d4edda; color: #155724; }
+.alert-error   { background: #f8d7da; color: #721c24; }
+
+/* Modal */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 12px; width: 90%; max-width: 650px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
+}
+.modal-header {
+    padding: 18px 25px; border-bottom: 2px solid #667eea;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h3 { color: #333; font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+.modal-body { padding: 25px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+.form-group { margin-bottom: 15px; }
+.form-group label {
+    font-size: 12px; color: #666; font-weight: 600;
+    margin-bottom: 5px; display: block;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 9px 12px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: #667eea;
+}
+
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.chamado-info {
+    background: #f8f9ff; padding: 12px 15px; border-radius: 6px;
+    margin-bottom: 15px; font-size: 13px; border-left: 3px solid #667eea;
+}
+.chamado-info strong { color: #333; }
+
+.hist-entry {
+    background: #fafafa; padding: 10px 12px; border-radius: 6px;
+    margin-bottom: 8px; font-size: 13px; border-left: 3px solid #ddd;
+}
+.hist-entry.auto { border-left-color: #667eea; background: #f3f0fa; }
+.hist-entry .meta { font-size: 11px; color: #888; margin-top: 4px; }
+
+.aviso-amarelo {
+    background: #fff9c4; padding: 10px 12px; border-left: 3px solid #f39c12;
+    border-radius: 4px; font-size: 13px; color: #5d4e00; margin-bottom: 15px;
+}
+
+.tipo-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tipo-card {
+    border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+    background: white;
+}
+.tipo-card:hover { border-color: #667eea; background: #f8f9ff; }
+.tipo-card.ativo {
+    border-color: #667eea; background: linear-gradient(135deg, #eef1ff, #f3eaff);
+    box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+}
+.tipo-card .tipo-icone { font-size: 26px; margin-bottom: 4px; }
+.tipo-card .tipo-nome { font-weight: 700; color: #333; font-size: 14px; }
+.tipo-card .tipo-desc { font-size: 11px; color: #888; margin-top: 2px; }
+
+.help-text { font-size: 11px; color: #888; margin-top: 4px; }
+
+@media (max-width: 768px) {
+    header { flex-direction: column; gap: 10px; }
+    .row-2 { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🔧 Painel do Técnico</h1>
+    <nav>
+        <span class="nome-user" id="nomeUser">—</span>
+        <a href="/tecnico/painel" class="active">🎯 Meus Chamados</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError"   class="alert alert-error"></div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card ativos">
+            <div class="num" id="statAtivos">0</div>
+            <div class="label">Chamados ativos</div>
+        </div>
+        <div class="stat-card atend">
+            <div class="num" id="statAtend">0</div>
+            <div class="label">Em atendimento</div>
+        </div>
+        <div class="stat-card fila" id="cardFila">
+            <div class="num" id="statFila">0</div>
+            <div class="label">Fila aberta</div>
+        </div>
+        <div class="stat-card tempo">
+            <div class="num" id="statTempo">0min</div>
+            <div class="label">Tempo trabalhado</div>
+        </div>
+    </div>
+
+    <!-- MEUS CHAMADOS -->
+    <div class="card">
+        <h3>
+            <span>🎯 Meus Chamados</span>
+            <button class="btn btn-primary" onclick="abrirModalNovo()">➕ Abrir chamado</button>
+        </h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nº</th><th>Título</th><th>Cliente</th>
+                        <th>Status</th><th>Prio</th><th>Tempo</th>
+                        <th style="width: 240px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaMeus">
+                    <tr><td colspan="7" class="empty">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FILA ABERTA (só se elegível) -->
+    <div class="card" id="secFilaAberta" style="display:none;">
+        <h3>📥 Fila Aberta</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nº</th><th>Título</th><th>Cliente</th>
+                        <th>Prio</th><th>Aberto em</th>
+                        <th style="width: 130px;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaFila">
+                    <tr><td colspan="6" class="empty">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="rodape-info">
+        🔒 Você não vê valores, faturamento, clientes ou serviços — só sua fila pessoal e a fila aberta.
+    </div>
+</div>
+
+<!-- =========== MODAL: DETALHE DO CHAMADO (Atender) =========== -->
+<div class="modal-overlay" id="modalDet">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="detTitulo">Chamado</h3>
+            <button class="modal-close" onclick="fecharModal('modalDet')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="chamado-info" id="detInfo">—</div>
+
+            <!-- TROCAR SERVIÇO (só suporte técnico, aparece via JS) -->
+            <div class="form-group" id="grpTrocarServico" style="display:none; margin-top:10px;">
+                <label>🔧 Serviço vinculado (pode trocar a qualquer momento antes de finalizar)</label>
+                <div style="display:flex; gap:6px;">
+                    <select id="trocarSvcSel" style="flex:1;"></select>
+                    <button class="btn btn-secondary btn-sm" onclick="trocarServico()">🔄 Trocar</button>
+                </div>
+            </div>
+
+            <h4 style="margin: 15px 0 10px; color: #555; font-size: 14px;">➕ Adicionar histórico</h4>
+            <div class="row-2">
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="histData">
+                </div>
+                <div class="form-group" id="grpTempoDireto">
+                    <label id="lblTempoDireto">Quantidade de equipamentos atendidos</label>
+                    <input type="number" id="histTempoMin" min="1" placeholder="Ex: 3">
+                    <div class="help-text">Valor total = quantidade × valor do serviço no catálogo.</div>
+                </div>
+            </div>
+            <div class="row-2" id="grpHoras">
+                <div class="form-group">
+                    <label>Hora início</label>
+                    <input type="time" id="histInicio">
+                </div>
+                <div class="form-group">
+                    <label>Hora término</label>
+                    <input type="time" id="histFim">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Descrição do atendimento *</label>
+                <textarea id="histDesc" placeholder="O que foi feito?"></textarea>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="salvarHistorico()">💾 Salvar histórico</button>
+                <button class="btn btn-success" id="btnFinalizar" onclick="finalizarChamado()" style="display:none;">✅ Finalizar chamado</button>
+            </div>
+
+            <h4 style="margin: 20px 0 10px; color: #555; font-size: 14px;">📜 Histórico</h4>
+            <div id="histList"><em style="color:#999;">Sem histórico.</em></div>
+        </div>
+    </div>
+</div>
+
+<!-- =========== MODAL: NOVO CHAMADO =========== -->
+<div class="modal-overlay" id="modalNovo">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>➕ Abrir novo chamado</h3>
+            <button class="modal-close" onclick="fecharModal('modalNovo')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="aviso-amarelo">
+                ⚡ O chamado será criado e <strong>atribuído automaticamente a você</strong>.
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de serviço *</label>
+                <div class="tipo-cards">
+                    <div class="tipo-card ativo" id="tipoCardUser" onclick="selTipo('suporte_usuario')">
+                        <div class="tipo-icone">👤</div>
+                        <div class="tipo-nome">Suporte ao Usuário</div>
+                        <div class="tipo-desc">Cobra por tempo trabalhado</div>
+                    </div>
+                    <div class="tipo-card" id="tipoCardTec" onclick="selTipo('suporte_tecnico')">
+                        <div class="tipo-icone">🔧</div>
+                        <div class="tipo-nome">Suporte Técnico</div>
+                        <div class="tipo-desc">Serviço avulso (admin define valor)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloco que aparece SÓ se suporte técnico -->
+            <div class="form-group" id="grpServico" style="display:none;">
+                <label>Serviço técnico *</label>
+                <select id="novoServico">
+                    <option value="">— Selecione um serviço —</option>
+                </select>
+                <div class="help-text">Se o serviço que você precisa não está na lista, peça ao admin para cadastrar.</div>
+            </div>
+
+            <div class="form-group">
+                <label>Cliente *</label>
+                <select id="novoCliente"><option value="">— Carregando —</option></select>
+            </div>
+            <div class="form-group">
+                <label>Título *</label>
+                <input type="text" id="novoTitulo" placeholder="Ex: Impressora não imprime">
+            </div>
+            <div class="form-group">
+                <label>Descrição *</label>
+                <textarea id="novoDesc" placeholder="Descreva o problema"></textarea>
+            </div>
+            <div class="row-2">
+                <div class="form-group">
+                    <label>Prioridade</label>
+                    <select id="novoPrio">
+                        <option value="baixa">Baixa</option>
+                        <option value="media" selected>Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="novoCat">
+                        <option value="geral">Geral</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="rede">Rede</option>
+                        <option value="seguranca">Segurança</option>
+                        <option value="email">Email</option>
+                        <option value="impressora">Impressora</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalNovo')">Cancelar</button>
+                <button class="btn btn-primary" onclick="criarChamado()">💾 Criar e atribuir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========== MODAL: TRANSFERIR =========== -->
+<div class="modal-overlay" id="modalTransf">
+    <div class="modal" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>🔄 Transferir chamado</h3>
+            <button class="modal-close" onclick="fecharModal('modalTransf')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="aviso-amarelo">
+                O chamado sairá da sua fila e irá direto pra fila do técnico escolhido.
+            </div>
+            <div class="form-group">
+                <label>Transferir para *</label>
+                <select id="transfTec"><option value="">— Selecione —</option></select>
+            </div>
+            <div class="form-group">
+                <label>Motivo *</label>
+                <textarea id="transfMotivo" placeholder="Por que está transferindo?"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalTransf')">Cancelar</button>
+                <button class="btn btn-warning" onclick="confirmarTransferir()">🔄 Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========== MODAL: DEVOLVER =========== -->
+<div class="modal-overlay" id="modalDev">
+    <div class="modal" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>🔙 Devolver chamado</h3>
+            <button class="modal-close" onclick="fecharModal('modalDev')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="aviso-amarelo">
+                O chamado voltará para a fila aberta e outros técnicos poderão pegá-lo.
+            </div>
+            <div class="form-group">
+                <label>Motivo da devolução * (mín. 10 caracteres)</label>
+                <textarea id="devMotivo" placeholder="Explique por que está devolvendo"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal('modalDev')">Cancelar</button>
+                <button class="btn btn-danger" onclick="confirmarDevolver()">🔙 Devolver à fila</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let meusChamados = [];
+let filaChamados = [];
+let tecnicosLista = [];
+let clientesLista = [];
+let servicosLista = [];          // catálogo de serviços técnicos
+let tipoChamadoAtual = 'suporte_usuario';  // seleção no modal de novo chamado
+let chamadoAtivo = null;       // id do chamado no modal de detalhe
+let chamadoAtivoDados = null;  // objeto chamado carregado
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+function H() { return { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' }; }
+
+function escapeHTML(s) {
+    return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function mostrarSucesso(m) {
+    const e = document.getElementById('alertSuccess');
+    e.textContent = '✅ ' + m; e.style.display = 'block';
+    setTimeout(() => e.style.display='none', 3000);
+}
+function mostrarErro(m) {
+    const e = document.getElementById('alertError');
+    e.textContent = '❌ ' + m; e.style.display = 'block';
+    setTimeout(() => e.style.display='none', 5000);
+}
+function fmtMin(m) {
+    m = parseInt(m||0);
+    if (m <= 0) return '0min';
+    if (m < 60) return m + 'min';
+    const h = Math.floor(m/60), r = m%60;
+    return r ? `${h}h ${r}min` : `${h}h`;
+}
+function fmtDataBR(iso) {
+    if (!iso) return '—';
+    try {
+        const d = new Date(iso);
+        return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    } catch { return iso; }
+}
+
+// ========== CARREGAR ==========
+async function carregar() {
+    if (!getToken()) { window.location.href = '/'; return; }
+    try {
+        // Verifica se é técnico (ou admin). Se não for, redireciona.
+        const rU = await fetch('/api/usuario-logado', { headers: H() });
+        if (!rU.ok) { logout(); return; }
+        const u = await rU.json();
+        document.getElementById('nomeUser').textContent = '👤 ' + u.nome;
+
+        if (u.tipo_usuario === 'admin' || u.is_admin) {
+            // Admin veio parar aqui? Redireciona
+            window.location.href = '/dashboard';
+            return;
+        }
+        if (u.tipo_usuario !== 'tecnico') {
+            mostrarErro('Acesso restrito a técnicos');
+            return;
+        }
+
+        const [rResumo, rMeus, rFila, rTecs, rClientes, rServicos] = await Promise.all([
+            fetch('/api/tecnico/resumo', { headers: H() }),
+            fetch('/api/chamados/?fila=minha', { headers: H() }),
+            u.pode_ver_fila_aberta
+                ? fetch('/api/chamados/?fila=aberta', { headers: H() })
+                : Promise.resolve({ ok: true, json: () => Promise.resolve([]) }),
+            fetch('/api/usuarios/tecnicos', { headers: H() }),
+            fetch('/api/clientes/', { headers: H() }),
+            fetch('/api/servicos/?ativo=true', { headers: H() }),
+        ]);
+
+        if (rResumo.ok) aplicarResumo(await rResumo.json(), u);
+        meusChamados = rMeus.ok ? await rMeus.json() : [];
+        filaChamados = rFila.ok ? await rFila.json() : [];
+        tecnicosLista = rTecs.ok ? await rTecs.json() : [];
+        clientesLista = rClientes.ok ? await rClientes.json() : [];
+        servicosLista = rServicos.ok ? await rServicos.json() : [];
+
+        renderMeus();
+        if (u.pode_ver_fila_aberta) {
+            document.getElementById('secFilaAberta').style.display = '';
+            renderFila();
+        }
+
+        popularSelects(u.id);
+    } catch (err) {
+        console.error(err);
+        mostrarErro('Erro ao carregar: ' + err.message);
+    }
+}
+
+function aplicarResumo(r, u) {
+    const ativos = (r.atribuidos || 0) + (r.em_atendimento || 0);
+    document.getElementById('statAtivos').textContent = ativos;
+    document.getElementById('statAtend').textContent = r.em_atendimento || 0;
+    document.getElementById('statTempo').textContent = fmtMin(r.minutos_trabalhados);
+    if (u.pode_ver_fila_aberta) {
+        document.getElementById('statFila').textContent = r.fila_aberta_count ?? 0;
+    } else {
+        document.getElementById('cardFila').style.display = 'none';
+    }
+}
+
+function statusBadge(s) {
+    const labels = {'aberto':'Aberto','atribuido':'Atribuído','em_atendimento':'Em atendimento','finalizado':'Finalizado'};
+    return `<span class="status-badge status-${s}">${labels[s] || s}</span>`;
+}
+function prioBadge(p) {
+    return `<span class="prio-badge prio-${p}">${p}</span>`;
+}
+
+function renderMeus() {
+    const tbody = document.getElementById('tabelaMeus');
+    if (meusChamados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">🎉 Você não tem chamados pendentes.</td></tr>';
+        return;
+    }
+    // Filtra finalizados do topo (mostra pra baixo)
+    meusChamados.sort((a,b) => {
+        if (a.status === 'finalizado' && b.status !== 'finalizado') return 1;
+        if (b.status === 'finalizado' && a.status !== 'finalizado') return -1;
+        return 0;
+    });
+    tbody.innerHTML = meusChamados.map(c => {
+        const podeAcao = c.status !== 'finalizado';
+        const ehTec = c.tipo_servico === 'suporte_tecnico';
+        const medida = ehTec
+            ? `📦 ${c.tempo_gasto_minutos || 0} un`
+            : fmtMin(c.tempo_gasto_minutos);
+        return `
+        <tr>
+            <td><strong>${escapeHTML(c.numero)}</strong></td>
+            <td>${escapeHTML(c.titulo)}</td>
+            <td>${escapeHTML(c.cliente_nome || '—')}</td>
+            <td>${statusBadge(c.status)}</td>
+            <td>${prioBadge(c.prioridade)}</td>
+            <td>${medida}</td>
+            <td class="acoes">
+                <button class="btn btn-info btn-sm" onclick="abrirDetalhe(${c.id})">👁️ Atender</button>
+                ${podeAcao ? `<button class="btn btn-warning btn-sm" onclick="abrirTransferir(${c.id})">🔄</button>` : ''}
+                ${podeAcao ? `<button class="btn btn-danger btn-sm" onclick="abrirDevolver(${c.id})">🔙</button>` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function renderFila() {
+    const tbody = document.getElementById('tabelaFila');
+    if (filaChamados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum chamado na fila aberta.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = filaChamados.map(c => `
+        <tr>
+            <td><strong>${escapeHTML(c.numero)}</strong></td>
+            <td>${escapeHTML(c.titulo)}</td>
+            <td>${escapeHTML(c.cliente_nome || '—')}</td>
+            <td>${prioBadge(c.prioridade)}</td>
+            <td style="font-size:12px; color:#888;">${fmtDataBR(c.criado_em)}</td>
+            <td><button class="btn btn-success btn-sm" onclick="puxar(${c.id})">📌 Puxar</button></td>
+        </tr>
+    `).join('');
+}
+
+function popularSelects(meuId) {
+    // Técnicos (para transferir) — excluir eu mesmo
+    const opts = tecnicosLista
+        .filter(t => t.id !== meuId)
+        .map(t => `<option value="${t.id}">${escapeHTML(t.nome)}${t.pode_ver_fila_aberta?' ✅':''}</option>`)
+        .join('');
+    document.getElementById('transfTec').innerHTML = '<option value="">— Selecione —</option>' + opts;
+
+    // Clientes (para novo chamado)
+    const copts = clientesLista.map(c => {
+        const n = c.empresa || c.nome;
+        return `<option value="${c.id}">${escapeHTML(n)}</option>`;
+    }).join('');
+    document.getElementById('novoCliente').innerHTML = '<option value="">— Selecione —</option>' + copts;
+
+    // Serviços técnicos (só aparece quando tipo=suporte_tecnico)
+    const sopts = servicosLista.map(s => {
+        return `<option value="${s.id}">${escapeHTML(s.nome)}${s.categoria ? ' — ' + escapeHTML(s.categoria) : ''}</option>`;
+    }).join('');
+    document.getElementById('novoServico').innerHTML =
+        '<option value="">— Selecione um serviço —</option>' + sopts;
+}
+
+// ========== PUXAR ==========
+async function puxar(chamadoId) {
+    const c = filaChamados.find(x => x.id === chamadoId);
+    if (!confirm(`Puxar o chamado ${c.numero} para você?`)) return;
+    try {
+        const r = await fetch(`/api/chamados/${chamadoId}/puxar`, { method:'POST', headers: H() });
+        if (r.ok) {
+            mostrarSucesso('Chamado puxado para sua fila!');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro ao puxar');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+// ========== NOVO ==========
+function selTipo(tipo) {
+    tipoChamadoAtual = tipo;
+    document.getElementById('tipoCardUser').classList.toggle('ativo', tipo === 'suporte_usuario');
+    document.getElementById('tipoCardTec').classList.toggle('ativo', tipo === 'suporte_tecnico');
+    document.getElementById('grpServico').style.display = (tipo === 'suporte_tecnico') ? '' : 'none';
+}
+
+function abrirModalNovo() {
+    tipoChamadoAtual = 'suporte_usuario';
+    selTipo('suporte_usuario');
+    document.getElementById('novoCliente').value = '';
+    document.getElementById('novoTitulo').value = '';
+    document.getElementById('novoDesc').value = '';
+    document.getElementById('novoPrio').value = 'media';
+    document.getElementById('novoCat').value = 'geral';
+    document.getElementById('novoServico').value = '';
+    document.getElementById('modalNovo').classList.add('active');
+}
+async function criarChamado() {
+    const cliente_id = parseInt(document.getElementById('novoCliente').value);
+    const titulo = document.getElementById('novoTitulo').value.trim();
+    const descricao = document.getElementById('novoDesc').value.trim();
+    if (!cliente_id) { mostrarErro('Selecione o cliente'); return; }
+    if (!titulo || !descricao) { mostrarErro('Título e descrição são obrigatórios'); return; }
+
+    const payload = {
+        cliente_id, titulo, descricao,
+        prioridade: document.getElementById('novoPrio').value,
+        categoria: document.getElementById('novoCat').value || 'geral',
+        tipo_servico: tipoChamadoAtual,
+    };
+
+    // Se for suporte técnico: precisa de um serviço do catálogo
+    if (tipoChamadoAtual === 'suporte_tecnico') {
+        const sid = document.getElementById('novoServico').value;
+        if (!sid) {
+            mostrarErro('Selecione um serviço técnico do catálogo');
+            return;
+        }
+        payload.servico_id = parseInt(sid, 10);
+    }
+
+    try {
+        const r = await fetch('/api/chamados/', { method: 'POST', headers: H(),
+            body: JSON.stringify(payload)
+        });
+        if (r.ok) {
+            mostrarSucesso('Chamado criado e atribuído a você!');
+            fecharModal('modalNovo');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+// ========== DETALHE ==========
+async function abrirDetalhe(chamadoId) {
+    chamadoAtivo = chamadoId;
+    try {
+        const r = await fetch(`/api/chamados/${chamadoId}`, { headers: H() });
+        if (!r.ok) { mostrarErro('Erro ao carregar chamado'); return; }
+        chamadoAtivoDados = await r.json();
+        const c = chamadoAtivoDados;
+
+        document.getElementById('detTitulo').textContent = `${c.numero} — ${c.titulo}`;
+        const ehTec = c.tipo_servico === 'suporte_tecnico';
+        const totalLabel = ehTec
+            ? `<strong>Total:</strong> 📦 ${c.tempo_gasto_minutos || 0} un`
+            : `<strong>Tempo gasto:</strong> ${fmtMin(c.tempo_gasto_minutos)}`;
+        document.getElementById('detInfo').innerHTML = `
+            <strong>Cliente:</strong> ${escapeHTML(c.cliente_nome || '—')}<br>
+            <strong>Descrição:</strong> ${escapeHTML(c.descricao)}<br>
+            <strong>Status:</strong> ${statusBadge(c.status)} &nbsp;
+            <strong>Prioridade:</strong> ${prioBadge(c.prioridade)}<br>
+            <strong>Tipo:</strong> ${ehTec ? '🔧 Técnico' : '⏱️ Por tempo'}
+            ${c.servico_tecnico_nome ? ' — ' + escapeHTML(c.servico_tecnico_nome) : ''}<br>
+            ${totalLabel}
+            ${c.motivo_devolucao ? `<br><strong style="color:#c0392b;">⚠ Motivo da última devolução:</strong> ${escapeHTML(c.motivo_devolucao)}` : ''}
+        `;
+
+        // Configura o form de histórico conforme tipo
+        const grpHoras = document.getElementById('grpHoras');
+        const grpTempo = document.getElementById('grpTempoDireto');
+        if (c.tipo_servico === 'suporte_tecnico') {
+            grpHoras.style.display = 'none';
+            grpTempo.style.display = '';
+        } else {
+            grpHoras.style.display = '';
+            grpTempo.style.display = 'none';
+        }
+
+        // Botão Finalizar: só aparece se ainda não finalizado
+        const btnFin = document.getElementById('btnFinalizar');
+        btnFin.style.display = (c.status !== 'finalizado') ? '' : 'none';
+
+        // Bloco trocar serviço: só aparece em suporte técnico não finalizado
+        const grpTroca = document.getElementById('grpTrocarServico');
+        if (ehTec && c.status !== 'finalizado') {
+            grpTroca.style.display = '';
+            const sel = document.getElementById('trocarSvcSel');
+            const opts = servicosLista.map(s =>
+                `<option value="${s.id}" ${s.id === c.servico_id ? 'selected' : ''}>${escapeHTML(s.nome)}${s.categoria ? ' — ' + escapeHTML(s.categoria) : ''}</option>`
+            ).join('');
+            sel.innerHTML = opts || '<option value="">— Nenhum serviço no catálogo —</option>';
+        } else {
+            grpTroca.style.display = 'none';
+        }
+
+        // Data default = hoje
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('histData').value = hoje;
+        document.getElementById('histInicio').value = '';
+        document.getElementById('histFim').value = '';
+        document.getElementById('histTempoMin').value = '';
+        document.getElementById('histDesc').value = '';
+
+        renderHist(c.historicos || []);
+        document.getElementById('modalDet').classList.add('active');
+    } catch (err) { mostrarErro(err.message); }
+}
+
+function renderHist(hs) {
+    const el = document.getElementById('histList');
+    if (!hs || !hs.length) { el.innerHTML = '<em style="color:#999;">Sem histórico ainda.</em>'; return; }
+    const ehTec = chamadoAtivoDados && chamadoAtivoDados.tipo_servico === 'suporte_tecnico';
+    el.innerHTML = hs.map(h => {
+        const isAuto = /^(🔄|🔙)/.test(h.descricao || '');
+        let medida = '';
+        if (h.tempo_minutos > 0) {
+            medida = ehTec
+                ? ' • 📦 ' + h.tempo_minutos + ' un'
+                : ' • ⏱️ ' + fmtMin(h.tempo_minutos);
+        }
+        return `
+        <div class="hist-entry ${isAuto?'auto':''}">
+            ${escapeHTML(h.descricao)}
+            <div class="meta">
+                ${escapeHTML(h.usuario_nome || '—')}
+                ${medida}
+                ${h.hora_inicio ? ' • ' + h.hora_inicio + '—' + (h.hora_termino||'?') : ''}
+                • ${fmtDataBR(h.criado_em)}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function salvarHistorico() {
+    if (!chamadoAtivo) return;
+    const c = chamadoAtivoDados;
+    const desc = document.getElementById('histDesc').value.trim();
+    if (!desc) { mostrarErro('Descrição é obrigatória'); return; }
+
+    const payload = {
+        descricao: desc,
+        data_atendimento: document.getElementById('histData').value || undefined,
+    };
+
+    if (c.tipo_servico === 'suporte_tecnico') {
+        const min = parseInt(document.getElementById('histTempoMin').value);
+        if (!isNaN(min) && min > 0) payload.tempo_minutos = min;
+    } else {
+        const hi = document.getElementById('histInicio').value;
+        const hf = document.getElementById('histFim').value;
+        if (hi) payload.hora_inicio = hi;
+        if (hf) payload.hora_termino = hf;
+    }
+
+    try {
+        const r = await fetch(`/api/chamados/${chamadoAtivo}/historico`, {
+            method: 'POST', headers: H(), body: JSON.stringify(payload),
+        });
+        if (r.ok) {
+            mostrarSucesso('Histórico adicionado');
+            abrirDetalhe(chamadoAtivo);  // Reabre com dados atualizados
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+// ========== FINALIZAR ==========
+async function finalizarChamado() {
+    if (!chamadoAtivo) return;
+    if (!confirm('Finalizar este chamado? O admin verá o total no faturamento.')) return;
+    try {
+        const r = await fetch(`/api/chamados/${chamadoAtivo}/finalizar`, {
+            method: 'POST', headers: H()
+        });
+        if (r.ok) {
+            mostrarSucesso('Chamado finalizado!');
+            fecharModal('modalDet');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro ao finalizar');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+// ========== TROCAR SERVIÇO ==========
+async function trocarServico() {
+    if (!chamadoAtivo) return;
+    const novoId = parseInt(document.getElementById('trocarSvcSel').value);
+    if (!novoId) { mostrarErro('Selecione um serviço'); return; }
+    if (chamadoAtivoDados && chamadoAtivoDados.servico_id === novoId) {
+        mostrarErro('Este já é o serviço atual'); return;
+    }
+    try {
+        const r = await fetch(`/api/chamados/${chamadoAtivo}/servico`, {
+            method: 'PUT', headers: H(),
+            body: JSON.stringify({ servico_id: novoId })
+        });
+        if (r.ok) {
+            mostrarSucesso('Serviço atualizado!');
+            abrirDetalhe(chamadoAtivo);  // Recarrega modal
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+// ========== TRANSFERIR ==========
+function abrirTransferir(chamadoId) {
+    chamadoAtivo = chamadoId;
+    document.getElementById('transfTec').value = '';
+    document.getElementById('transfMotivo').value = '';
+    document.getElementById('modalTransf').classList.add('active');
+}
+async function confirmarTransferir() {
+    const tid = parseInt(document.getElementById('transfTec').value);
+    const mot = document.getElementById('transfMotivo').value.trim();
+    if (!tid) { mostrarErro('Selecione um técnico'); return; }
+    if (!mot) { mostrarErro('Motivo é obrigatório'); return; }
+    try {
+        const r = await fetch(`/api/chamados/${chamadoAtivo}/transferir`, {
+            method: 'POST', headers: H(), body: JSON.stringify({ tecnico_id: tid, motivo: mot })
+        });
+        if (r.ok) {
+            mostrarSucesso('Chamado transferido!');
+            fecharModal('modalTransf');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+// ========== DEVOLVER ==========
+function abrirDevolver(chamadoId) {
+    chamadoAtivo = chamadoId;
+    document.getElementById('devMotivo').value = '';
+    document.getElementById('modalDev').classList.add('active');
+}
+async function confirmarDevolver() {
+    const mot = document.getElementById('devMotivo').value.trim();
+    if (mot.length < 10) { mostrarErro('Motivo precisa ter pelo menos 10 caracteres'); return; }
+    try {
+        const r = await fetch(`/api/chamados/${chamadoAtivo}/devolver`, {
+            method: 'POST', headers: H(), body: JSON.stringify({ motivo: mot })
+        });
+        if (r.ok) {
+            mostrarSucesso('Chamado devolvido à fila.');
+            fecharModal('modalDev');
+            carregar();
+        } else {
+            const e = await r.json();
+            mostrarErro(e.detail || 'Erro');
+        }
+    } catch (err) { mostrarErro(err.message); }
+}
+
+// ========== HELPERS ==========
+function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    window.location.href = '/';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') {
+    ['modalDet','modalNovo','modalTransf','modalDev'].forEach(fecharModal);
+}});
+['modalDet','modalNovo','modalTransf','modalDev'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+        if (e.target === e.currentTarget) fecharModal(id);
+    });
+});
+
+document.addEventListener('DOMContentLoaded', carregar);
+</script>
+</body>
+</html>

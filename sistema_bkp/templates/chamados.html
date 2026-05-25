@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chamados - Sistema de Chamados</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        header h1 {
+            font-size: 24px;
+        }
+
+        header nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        header nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        header nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table thead {
+            background-color: #f5f5f5;
+        }
+
+        table th {
+            padding: 12px;
+            text-align: left;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-aberto {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-em_atendimento {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
+        .badge-finalizado {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .container {
+                padding: 0 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎫 Chamados</h1>
+        <nav>
+            <a href="/dashboard">📊 Dashboard</a>
+            <a href="/chamados">🎫 Chamados</a>
+        </nav>
+        <button class="btn-logout" onclick="fazer_logout()">🚪 Sair</button>
+    </header>
+
+    <div class="container">
+        <h2>Gerenciamento de Chamados</h2>
+
+        <!-- CRIAR CHAMADO -->
+        <div class="section">
+            <h3>➕ Criar Novo Chamado</h3>
+            <form id="formChamado">
+                <div class="form-group">
+                    <label for="titulo">Título</label>
+                    <input type="text" id="titulo" name="titulo" required placeholder="Título do chamado">
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" required placeholder="Descreva o problema..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" name="categoria">
+                        <option value="geral">Geral</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="rede">Rede</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="prioridade">Prioridade</label>
+                    <select id="prioridade" name="prioridade">
+                        <option value="baixa">Baixa</option>
+                        <option value="media" selected>Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">✓ Criar Chamado</button>
+            </form>
+        </div>
+
+        <!-- LISTAR CHAMADOS -->
+        <div class="section">
+            <h3>📋 Meus Chamados</h3>
+            
+            <div id="loading" class="loading" style="display:block;">
+                <p>Carregando chamados...</p>
+            </div>
+
+            <div id="tabelaChamados" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Status</th>
+                            <th>Prioridade</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Script carregado');
+
+        function fazer_logout() {
+            if (confirm('Tem certeza que deseja sair?')) {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
+        }
+
+        async function carregar_chamados() {
+            const token = localStorage.getItem('token');
+            console.log('Token:', token ? 'Presente' : 'Ausente');
+
+            if (!token) {
+                console.log('Redirecionando para login (sem token)');
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/chamados/listar', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('Response status:', response.status);
+
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/';
+                    return;
+                }
+
+                if (response.ok) {
+                    const chamados = await response.json();
+                    console.log('Chamados carregados:', chamados);
+                    mostrar_chamados(chamados);
+                } else {
+                    console.error('Erro na resposta');
+                    document.getElementById('loading').innerHTML = '<p style="color:red;">Erro ao carregar chamados</p>';
+                }
+            } catch (erro) {
+                console.error('Erro:', erro);
+                document.getElementById('loading').innerHTML = '<p style="color:red;">Erro de conexão: ' + erro.message + '</p>';
+            }
+        }
+
+        function mostrar_chamados(chamados) {
+            const corpo = document.getElementById('corpoTabela');
+            corpo.innerHTML = '';
+
+            if (chamados.length === 0) {
+                corpo.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Nenhum chamado encontrado</td></tr>';
+                document.getElementById('tabelaChamados').style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+                return;
+            }
+
+            chamados.forEach(c => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${c.id}</td>
+                    <td>${c.titulo}</td>
+                    <td><span class="badge badge-${c.status}">${c.status}</span></td>
+                    <td>${c.prioridade}</td>
+                    <td>${new Date(c.criado_em).toLocaleDateString('pt-BR')}</td>
+                `;
+                corpo.appendChild(row);
+            });
+
+            document.getElementById('tabelaChamados').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        async function criar_chamado(e) {
+            e.preventDefault();
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Token não encontrado');
+                return;
+            }
+
+            const dados = {
+                titulo: document.getElementById('titulo').value,
+                descricao: document.getElementById('descricao').value,
+                categoria: document.getElementById('categoria').value,
+                prioridade: document.getElementById('prioridade').value,
+                tempo_estimado: 0
+            };
+
+            try {
+                const response = await fetch('/api/chamados/criar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                if (response.ok) {
+                    alert('✓ Chamado criado com sucesso!');
+                    document.getElementById('formChamado').reset();
+                    carregar_chamados();
+                } else {
+                    const erro = await response.json();
+                    alert('❌ Erro: ' + (erro.detail || 'Erro ao criar chamado'));
+                }
+            } catch (erro) {
+                alert('❌ Erro: ' + erro.message);
+            }
+        }
+
+        // Iniciar ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM carregado, iniciando...');
+            carregar_chamados();
+            document.getElementById('formChamado').addEventListener('submit', criar_chamado);
+        });
+    </script>
+</body>
+</html>

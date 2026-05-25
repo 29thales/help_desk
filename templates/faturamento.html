@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faturamento - Help Desk</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; }
+
+header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 22px; }
+header nav { display: flex; gap: 10px; align-items: center; }
+header nav a {
+    color: white; text-decoration: none; padding: 8px 14px;
+    border-radius: 6px; background: rgba(255,255,255,0.15);
+    font-size: 14px; transition: background 0.3s;
+}
+header nav a:hover { background: rgba(255,255,255,0.25); }
+.btn-logout {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+.container { max-width: 1280px; margin: 25px auto; padding: 0 20px; }
+h2 { text-align: center; color: #333; margin-bottom: 25px; font-size: 24px; }
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px; margin-bottom: 20px;
+}
+.card {
+    background: white; padding: 20px; border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center;
+    border-left: 4px solid #667eea;
+    transition: transform 0.2s;
+}
+.card:hover { transform: translateY(-2px); }
+.card .icone { font-size: 24px; margin-bottom: 4px; }
+.card h3 {
+    font-size: 13px; color: #666; text-transform: uppercase;
+    font-weight: 600; margin-bottom: 6px; letter-spacing: 0.3px;
+}
+.card .numero { font-size: 26px; font-weight: 700; color: #667eea; }
+.card.verde { border-left-color: #27ae60; }
+.card.verde .numero { color: #27ae60; }
+.card.laranja { border-left-color: #f39c12; }
+.card.laranja .numero { color: #f39c12; }
+.card.roxo { border-left-color: #764ba2; }
+.card.roxo .numero { color: #764ba2; }
+
+.filters-card {
+    background: white; padding: 18px 20px; border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px;
+}
+.filters-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1.5fr auto auto;
+    gap: 10px; align-items: end;
+}
+.filter-group label {
+    display: block; font-size: 11px; color: #666;
+    font-weight: 700; text-transform: uppercase;
+    margin-bottom: 5px; letter-spacing: 0.3px;
+}
+.filter-group select, .filter-group input {
+    width: 100%; padding: 9px 12px; border: 2px solid #e0e0e0;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+}
+.filter-group select:focus, .filter-group input:focus {
+    outline: none; border-color: #667eea;
+}
+
+.btn {
+    padding: 10px 18px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: inherit; transition: all 0.2s; white-space: nowrap;
+}
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+.btn-success { background: #27ae60; color: white; }
+.btn-success:hover { background: #229954; }
+.btn-info { background: #3498db; color: white; }
+.btn-info:hover { background: #2874a6; }
+.btn-secondary { background: #e0e0e0; color: #555; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.table-card {
+    background: white; border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden;
+}
+.table-header {
+    padding: 16px 20px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 2px solid #667eea;
+    gap: 15px; flex-wrap: wrap;
+}
+.table-header h3 { color: #333; font-size: 16px; }
+.table-header .search-box { position: relative; width: 260px; }
+.table-header .search-box input {
+    width: 100%; padding: 7px 10px 7px 32px;
+    border: 2px solid #e0e0e0; border-radius: 6px;
+    font-size: 13px; font-family: inherit;
+}
+.table-header .search-box input:focus { outline: none; border-color: #667eea; }
+.table-header .search-icon {
+    position: absolute; left: 10px; top: 50%;
+    transform: translateY(-50%); font-size: 13px; color: #999;
+}
+
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fa; }
+th {
+    padding: 11px 15px; text-align: left;
+    color: #666; font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    border-bottom: 2px solid #e0e0e0; white-space: nowrap;
+    user-select: none;
+}
+th.sortable { cursor: pointer; }
+th.sortable:hover { background: #eef0ff; color: #667eea; }
+th.sortable::after { content: ' ⇅'; opacity: 0.4; font-size: 10px; }
+th.sort-asc::after { content: ' ▲'; opacity: 1; color: #667eea; }
+th.sort-desc::after { content: ' ▼'; opacity: 1; color: #667eea; }
+td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #444; }
+tbody tr:hover { background: #f9f9ff; }
+tbody tr:last-child td { border-bottom: none; }
+
+.cliente-nome { font-weight: 600; color: #333; }
+.cliente-empresa { font-size: 12px; color: #888; margin-top: 2px; }
+.valor-total { font-weight: 700; color: #27ae60; font-size: 15px; }
+.chamados-badge {
+    display: inline-block; background: #f0f4ff; color: #667eea;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 700;
+}
+.horas-unidades { font-size: 13px; color: #555; font-weight: 500; }
+
+.empty-state { text-align: center; padding: 40px 20px; color: #999; }
+.empty-state .big-icon { font-size: 48px; margin-bottom: 10px; display: block; }
+
+.chart-card {
+    background: white; border-radius: 10px; padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.chart-card h3 {
+    color: #333; font-size: 15px; margin-bottom: 15px;
+    padding-bottom: 10px; border-bottom: 2px solid #667eea;
+}
+.chart-wrapper { position: relative; height: 280px; }
+.chart-empty {
+    height: 280px; display: flex; align-items: center;
+    justify-content: center; color: #999; font-size: 14px;
+    flex-direction: column; gap: 8px;
+}
+.chart-empty .big-icon { font-size: 36px; opacity: 0.5; }
+
+tfoot tr {
+    background: linear-gradient(135deg, #eef0ff, #e8ebff);
+    border-top: 2px solid #667eea;
+}
+tfoot td {
+    font-weight: 700; color: #333;
+    padding: 12px 15px; font-size: 14px;
+}
+
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center;
+    align-items: flex-start; padding-top: 40px; overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 12px;
+    width: 95%; max-width: 1000px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    margin-bottom: 40px;
+}
+.modal-header {
+    padding: 20px 25px; border-bottom: 2px solid #667eea;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; background: white; z-index: 1;
+}
+.modal-header h3 { color: #333; font-size: 18px; }
+.modal-close {
+    background: none; border: none; font-size: 28px;
+    cursor: pointer; color: #999;
+}
+.modal-body { padding: 25px; }
+
+.cliente-resumo {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px; margin-bottom: 25px; padding: 18px;
+    background: linear-gradient(135deg, #f8f9ff, #eef0ff);
+    border-radius: 10px; border: 1px solid #e0e6ff;
+}
+.resumo-item { text-align: center; }
+.resumo-item .lbl {
+    font-size: 11px; color: #777; text-transform: uppercase;
+    font-weight: 700; letter-spacing: 0.3px; margin-bottom: 4px;
+}
+.resumo-item .val { font-size: 18px; font-weight: 700; color: #667eea; }
+.resumo-item .val.verde { color: #27ae60; }
+.resumo-item .val.laranja { color: #f39c12; }
+.resumo-item .val.pequeno { font-size: 14px; }
+
+.chamados-modal-wrapper { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+.chamados-modal-wrapper th { font-size: 11px; padding: 10px; }
+.chamados-modal-wrapper td { padding: 10px; font-size: 13px; vertical-align: middle; }
+
+.tipo-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700;
+}
+.tipo-badge.usuario { background: #e3f2fd; color: #1565c0; }
+.tipo-badge.tecnico { background: #e8f5e9; color: #2e7d32; }
+
+.btn-expandir {
+    background: none; border: 1px solid #667eea;
+    color: #667eea; padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; cursor: pointer; font-weight: 600;
+    font-family: inherit; white-space: nowrap;
+}
+.btn-expandir:hover { background: #667eea; color: white; }
+
+.historico-inline {
+    padding: 15px 20px; background: #fafbff;
+    border-left: 3px solid #667eea;
+}
+.historico-inline .hist-titulo {
+    font-size: 12px; color: #667eea; font-weight: 700;
+    text-transform: uppercase; margin-bottom: 10px;
+    letter-spacing: 0.3px;
+}
+.hist-item {
+    padding: 10px 0; border-bottom: 1px dashed #e0e0e0;
+    display: flex; gap: 12px; align-items: flex-start;
+}
+.hist-item:last-child { border-bottom: none; }
+.hist-data {
+    background: #667eea; color: white;
+    padding: 3px 10px; border-radius: 4px;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap; flex-shrink: 0;
+}
+.hist-horario {
+    background: white; border: 1px solid #e0e0e0;
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 11px; color: #555; font-weight: 500;
+    white-space: nowrap; flex-shrink: 0;
+}
+.hist-texto { flex: 1; font-size: 13px; color: #444; line-height: 1.4; }
+.hist-tempo {
+    background: #d4edda; color: #155724;
+    padding: 3px 10px; border-radius: 10px;
+    font-size: 11px; font-weight: 700;
+    white-space: nowrap; flex-shrink: 0;
+}
+.hist-carregando { color: #999; font-style: italic; padding: 10px; text-align: center; font-size: 12px; }
+
+.modal-footer-actions {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;
+}
+
+.alert {
+    padding: 12px 16px; border-radius: 6px; margin-bottom: 15px;
+    font-size: 14px; display: none;
+}
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+@media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .filters-row { grid-template-columns: 1fr 1fr; }
+    .filters-row > button { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+    header { flex-direction: column; gap: 10px; padding: 15px; }
+    .cards { grid-template-columns: 1fr 1fr; }
+    .filters-row { grid-template-columns: 1fr; }
+    .table-header { flex-direction: column; align-items: stretch; gap: 10px; }
+    .table-header .search-box { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🛠️ Help Desk</h1>
+    <nav>
+        <a href="/dashboard">📊 Dashboard</a>
+        <a href="/clientes/pagina">👥 Clientes</a>
+        <a href="/chamados/pagina">🎫 Chamados</a>
+        <a href="/faturamento/pagina">💰 Faturamento</a>
+        <a href="/servicos/pagina">🔧 Serviços</a>
+        <a href="/comissao/pagina" id="linkComissaoAdmin" style="display:none;">💼 Comissões</a>
+        <a href="/usuarios/pagina" id="linkUsuariosAdmin" style="display:none;">👫 Usuários</a>
+        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+
+    <h2>💰 Faturamento Mensal</h2>
+
+    <div id="alertSuccess" class="alert alert-success"></div>
+    <div id="alertError" class="alert alert-error"></div>
+
+    <div class="filters-card">
+        <div class="filters-row">
+            <div class="filter-group">
+                <label>Cliente</label>
+                <select id="filtroCliente">
+                    <option value="">Todos os clientes</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Ano</label>
+                <input type="number" id="filtroAno" min="2000" max="2100">
+            </div>
+            <div class="filter-group">
+                <label>Mês</label>
+                <select id="filtroMes">
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Tipo de Serviço</label>
+                <select id="filtroTipo">
+                    <option value="">Todos os tipos</option>
+                    <option value="suporte_usuario">Suporte ao Usuário</option>
+                    <option value="suporte_tecnico">Suporte Técnico</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="carregarResumo()">🔄 Atualizar</button>
+            <button class="btn btn-success" onclick="gerarPDFGeral()">📄 Gerar PDF Geral</button>
+        </div>
+    </div>
+
+    <div class="cards">
+        <div class="card roxo">
+            <div class="icone">👥</div>
+            <h3>Clientes no Período</h3>
+            <div class="numero" id="cardClientes">0</div>
+        </div>
+        <div class="card">
+            <div class="icone">🎫</div>
+            <h3>Chamados Faturados</h3>
+            <div class="numero" id="cardChamados">0</div>
+        </div>
+        <div class="card laranja">
+            <div class="icone">⏱️</div>
+            <h3>Horas / Unidades</h3>
+            <div class="numero" id="cardHoras" style="font-size: 20px;">0</div>
+        </div>
+        <div class="card verde">
+            <div class="icone">💰</div>
+            <h3>Total Faturado</h3>
+            <div class="numero" id="cardFaturado">R$ 0,00</div>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <div class="table-card">
+            <div class="table-header">
+                <h3>📊 Resumo por Cliente</h3>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="buscaCliente" placeholder="Filtrar clientes..." oninput="renderizarTabela()">
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-col="nome" onclick="ordenarPor('nome')">Cliente / Empresa</th>
+                            <th class="sortable" data-col="quantidade_chamados" onclick="ordenarPor('quantidade_chamados')" style="text-align: center;">Chamados</th>
+                            <th class="sortable" data-col="total_minutos" onclick="ordenarPor('total_minutos')">Horas / Unidades</th>
+                            <th class="sortable sort-desc" data-col="total_faturado" onclick="ordenarPor('total_faturado')" style="text-align: right;">Valor Faturado</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaResumo">
+                        <tr><td colspan="5" class="empty-state"><span class="big-icon">⏳</span>Carregando...</td></tr>
+                    </tbody>
+                    <tfoot id="tabelaFooter" style="display: none;">
+                        <tr>
+                            <td><strong>TOTAL</strong></td>
+                            <td style="text-align: center;"><strong id="footerChamados">0</strong></td>
+                            <td><strong id="footerHoras">0</strong></td>
+                            <td style="text-align: right;"><strong id="footerFaturado" style="color: #27ae60;">R$ 0,00</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>🥧 Distribuição do Faturamento</h3>
+            <div class="chart-wrapper">
+                <canvas id="graficoDistribuicao"></canvas>
+            </div>
+            <div id="chartEmpty" class="chart-empty" style="display: none;">
+                <div class="big-icon">📊</div>
+                <div>Sem dados para exibir</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal-overlay" id="modalDetalhes">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Detalhes do Cliente</h3>
+            <button class="modal-close" onclick="fecharModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div class="empty-state"><span class="big-icon">⏳</span>Carregando...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+let dadosAtuais = [];
+let ordenacao = { coluna: 'total_faturado', direcao: 'desc' };
+let chartInstance = null;
+let historicosCache = {};
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('access_token'); }
+
+function formatarMoeda(v) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+}
+
+function escapeHTML(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+}
+
+function formatarTempo(min) {
+    min = parseInt(min) || 0;
+    if (min <= 0) return '0min';
+    if (min < 60) return `${min}min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
+}
+
+function formatarResumoTempo(minutos, unidades) {
+    const partes = [];
+    if ((minutos || 0) > 0) partes.push(formatarTempo(minutos));
+    if ((unidades || 0) > 0) partes.push(`${unidades} un`);
+    return partes.length ? partes.join(' + ') : '0';
+}
+
+function mostrarErro(msg) {
+    const el = document.getElementById('alertError');
+    el.textContent = '❌ ' + msg;
+    el.style.display = 'block';
+    document.getElementById('alertSuccess').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    window.location.href = '/';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!getToken()) { window.location.href = '/'; return; }
+
+    const hoje = new Date();
+    document.getElementById('filtroAno').value = hoje.getFullYear();
+    document.getElementById('filtroMes').value = String(hoje.getMonth() + 1).padStart(2, '0');
+
+    carregarClientes();
+    carregarResumo();
+});
+
+async function carregarClientes() {
+    try {
+        const res = await fetch('/api/clientes/', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) return;
+        const clientes = await res.json();
+        const select = document.getElementById('filtroCliente');
+        clientes.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.empresa ? `${c.nome} (${c.empresa})` : c.nome;
+            select.appendChild(opt);
+        });
+    } catch (err) { console.error(err); }
+}
+
+async function carregarResumo() {
+    const ano = document.getElementById('filtroAno').value;
+    const mes = document.getElementById('filtroMes').value;
+    const clienteId = document.getElementById('filtroCliente').value;
+
+    if (!ano || !mes) { mostrarErro('Informe ano e mês'); return; }
+
+    const url = `/api/faturamento/resumo?ano=${ano}&mes=${mes}${clienteId ? `&cliente_id=${clienteId}` : ''}`;
+
+    document.getElementById('tabelaResumo').innerHTML =
+        '<tr><td colspan="5" class="empty-state"><span class="big-icon">⏳</span>Carregando...</td></tr>';
+
+    try {
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (res.status === 401) { logout(); return; }
+        if (!res.ok) { mostrarErro('Erro ao carregar resumo'); return; }
+
+        const data = await res.json();
+        dadosAtuais = Array.isArray(data) ? data : (data.items || []);
+
+        const tipoFiltro = document.getElementById('filtroTipo').value;
+        if (tipoFiltro) {
+            dadosAtuais = aplicarFiltroTipo(dadosAtuais, tipoFiltro);
+        }
+
+        atualizarCards(dadosAtuais);
+        renderizarTabela();
+        renderizarGrafico(dadosAtuais);
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
+}
+
+function aplicarFiltroTipo(lista, tipo) {
+    return lista.filter(c => {
+        if (tipo === 'suporte_usuario') return (c.total_minutos || 0) > 0;
+        if (tipo === 'suporte_tecnico') return (c.total_unidades || 0) > 0;
+        return true;
+    });
+}
+
+function atualizarCards(lista) {
+    const totalClientes = lista.length;
+    const totalChamados = lista.reduce((acc, i) => acc + (i.quantidade_chamados || 0), 0);
+    const totalMin = lista.reduce((acc, i) => acc + (i.total_minutos || 0), 0);
+    const totalUnid = lista.reduce((acc, i) => acc + (i.total_unidades || 0), 0);
+    const totalFat = lista.reduce((acc, i) => acc + (i.total_faturado || 0), 0);
+
+    document.getElementById('cardClientes').textContent = totalClientes;
+    document.getElementById('cardChamados').textContent = totalChamados;
+    document.getElementById('cardHoras').textContent = formatarResumoTempo(totalMin, totalUnid);
+    document.getElementById('cardFaturado').textContent = formatarMoeda(totalFat);
+
+    document.getElementById('footerChamados').textContent = totalChamados;
+    document.getElementById('footerHoras').textContent = formatarResumoTempo(totalMin, totalUnid);
+    document.getElementById('footerFaturado').textContent = formatarMoeda(totalFat);
+}
+
+function ordenarPor(coluna) {
+    if (ordenacao.coluna === coluna) {
+        ordenacao.direcao = ordenacao.direcao === 'asc' ? 'desc' : 'asc';
+    } else {
+        ordenacao.coluna = coluna;
+        ordenacao.direcao = 'asc';
+    }
+    renderizarTabela();
+}
+
+function renderizarTabela() {
+    const busca = (document.getElementById('buscaCliente').value || '').toLowerCase().trim();
+
+    let lista = [...dadosAtuais];
+
+    if (busca) {
+        lista = lista.filter(c => {
+            const texto = `${c.nome} ${c.empresa || ''}`.toLowerCase();
+            return texto.includes(busca);
+        });
+    }
+
+    const col = ordenacao.coluna;
+    const dir = ordenacao.direcao === 'asc' ? 1 : -1;
+    lista.sort((a, b) => {
+        let va = a[col], vb = b[col];
+        if (col === 'nome') { va = (a.nome || '').toLowerCase(); vb = (b.nome || '').toLowerCase(); }
+        if (va == null) va = 0;
+        if (vb == null) vb = 0;
+        if (va < vb) return -1 * dir;
+        if (va > vb) return 1 * dir;
+        return 0;
+    });
+
+    document.querySelectorAll('th.sortable').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (th.dataset.col === col) {
+            th.classList.add('sort-' + ordenacao.direcao);
+        }
+    });
+
+    const tbody = document.getElementById('tabelaResumo');
+    const footer = document.getElementById('tabelaFooter');
+
+    if (lista.length === 0) {
+        tbody.innerHTML = `
+            <tr><td colspan="5" class="empty-state">
+                <span class="big-icon">📭</span>
+                Nenhum dado encontrado para este período.
+            </td></tr>
+        `;
+        footer.style.display = 'none';
+        return;
+    }
+
+    tbody.innerHTML = lista.map(c => {
+        const clienteId = c.cliente_id || c.id || '';
+        const btnDisabled = clienteId ? '' : 'disabled';
+        const nomeHtml = c.empresa
+            ? `<div class="cliente-nome">${escapeHTML(c.nome)}</div><div class="cliente-empresa">${escapeHTML(c.empresa)}</div>`
+            : `<div class="cliente-nome">${escapeHTML(c.nome)}</div>`;
+
+        return `
+            <tr>
+                <td>${nomeHtml}</td>
+                <td style="text-align: center;">
+                    <span class="chamados-badge">${c.quantidade_chamados || 0}</span>
+                </td>
+                <td><span class="horas-unidades">${escapeHTML(c.total_horas_formatado || formatarResumoTempo(c.total_minutos, c.total_unidades))}</span></td>
+                <td style="text-align: right;">
+                    <span class="valor-total">${formatarMoeda(c.total_faturado)}</span>
+                </td>
+                <td style="text-align: center;">
+                    <button class="btn btn-info btn-sm" onclick="abrirDetalhes(${clienteId})" ${btnDisabled}>👁️ Ver Detalhes</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    footer.style.display = '';
+}
+
+function renderizarGrafico(lista) {
+    const ctx = document.getElementById('graficoDistribuicao');
+    const empty = document.getElementById('chartEmpty');
+
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+    const listaComValor = lista.filter(c => (c.total_faturado || 0) > 0);
+
+    if (!listaComValor || listaComValor.length === 0) {
+        ctx.style.display = 'none';
+        empty.style.display = 'flex';
+        return;
+    }
+
+    ctx.style.display = '';
+    empty.style.display = 'none';
+
+    const ordenada = [...listaComValor].sort((a, b) => (b.total_faturado || 0) - (a.total_faturado || 0));
+    let labels = [], valores = [];
+
+    if (ordenada.length <= 8) {
+        labels = ordenada.map(c => c.empresa || c.nome || '-');
+        valores = ordenada.map(c => c.total_faturado || 0);
+    } else {
+        labels = ordenada.slice(0, 7).map(c => c.empresa || c.nome || '-');
+        valores = ordenada.slice(0, 7).map(c => c.total_faturado || 0);
+        const outros = ordenada.slice(7).reduce((acc, c) => acc + (c.total_faturado || 0), 0);
+        if (outros > 0) {
+            labels.push('Outros');
+            valores.push(outros);
+        }
+    }
+
+    const cores = ['#667eea', '#27ae60', '#f39c12', '#e74c3c', '#764ba2', '#3498db', '#16a085', '#9b59b6'];
+
+    chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: cores.slice(0, labels.length),
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 10, font: { size: 11 }, boxWidth: 14 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const val = ctx.parsed;
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                            return `${formatarMoeda(val)} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function abrirDetalhes(clienteId) {
+    if (!clienteId) { mostrarErro('ID do cliente não informado'); return; }
+
+    historicosCache = {};
+    document.getElementById('modalBody').innerHTML =
+        '<div class="empty-state"><span class="big-icon">⏳</span>Carregando...</div>';
+    document.getElementById('modalDetalhes').classList.add('active');
+
+    const ano = document.getElementById('filtroAno').value;
+    const mes = document.getElementById('filtroMes').value;
+
+    try {
+        const res = await fetch(`/api/faturamento/detalhe/${clienteId}?ano=${ano}&mes=${mes}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!res.ok) { mostrarErro('Erro ao carregar detalhes'); fecharModal(); return; }
+        const data = await res.json();
+        renderizarModalDetalhes(data);
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+        fecharModal();
+    }
+}
+
+function renderizarModalDetalhes(data) {
+    const titulo = data.empresa
+        ? `📊 ${escapeHTML(data.nome)} - ${escapeHTML(data.empresa)}`
+        : `📊 ${escapeHTML(data.nome)}`;
+    document.getElementById('modalTitulo').innerHTML = titulo;
+
+    const mesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const nomeMes = mesNomes[(data.mes || 1) - 1];
+
+    const chamados = data.chamados || [];
+
+    let chamadosHtml = '';
+    if (chamados.length === 0) {
+        chamadosHtml = `
+            <div class="empty-state">
+                <span class="big-icon">📭</span>
+                Nenhum chamado finalizado neste período.
+            </div>
+        `;
+    } else {
+        chamadosHtml = `
+            <div class="chamados-modal-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº</th>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th><p>Descrição</th></P
+                            <th style="text-align: center;">Tempo / Unid.</th>
+                            <th style="text-align: right;">Valor</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${chamados.map((c, idx) => {
+                            const ehTecnico = c.tipo_servico === 'suporte_tecnico';
+                            const tipoClasse = ehTecnico ? 'tecnico' : 'usuario';
+                            const tipoLabel = ehTecnico ? 'Técnico' : 'Usuário';
+                            const tempoUnidade = ehTecnico
+                                ? (c.unidades_atendimento || '-')
+                                : (c.horas_atendimento || '-');
+
+                            return `
+                                <tr>
+                                    <td><strong>${escapeHTML(c.numero)}</strong></td>
+                                    <td>${escapeHTML(c.data_atendimento || c.data_faturamento || '-')}</td>
+                                    <td><span class="tipo-badge ${tipoClasse}">${tipoLabel}</span></td>
+                                    <td>${escapeHTML(c.descricao_atendimento || c.titulo || '-')}</td>
+                                    <td style="text-align: center;"><strong>${escapeHTML(tempoUnidade)}</strong></td>
+                                    <td style="text-align: right;"><strong style="color: #27ae60;">${formatarMoeda(c.valor_total)}</strong></td>
+                                    <td><button class="btn-expandir" onclick="toggleHistorico('${escapeHTML(c.numero)}', ${idx})">📋 Histórico</button></td>
+                                </tr>
+                                <tr id="hist-row-${idx}" style="display: none;">
+                                    <td colspan="7" style="padding: 0;">
+                                        <div id="hist-content-${idx}" class="historico-inline">
+                                            <div class="hist-carregando">Carregando histórico...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    document.getElementById('modalBody').innerHTML = `
+        <div class="cliente-resumo">
+            <div class="resumo-item">
+                <div class="lbl">Período</div>
+                <div class="val pequeno">${nomeMes} / ${data.ano}</div>
+            </div>
+            <div class="resumo-item">
+                <div class="lbl">Chamados</div>
+                <div class="val">${data.quantidade_chamados || 0}</div>
+            </div>
+            <div class="resumo-item">
+                <div class="lbl">Tempo / Unidades</div>
+                <div class="val laranja pequeno">${escapeHTML(data.total_horas_formatado || formatarResumoTempo(data.total_minutos, data.total_unidades))}</div>
+            </div>
+            <div class="resumo-item">
+                <div class="lbl">Total Faturado</div>
+                <div class="val verde">${formatarMoeda(data.total_faturado)}</div>
+            </div>
+        </div>
+
+        <h4 style="color: #333; margin-bottom: 12px; font-size: 15px;">🎫 Chamados do período</h4>
+
+        ${chamadosHtml}
+
+        <div class="modal-footer-actions">
+            <button class="btn btn-secondary" onclick="fecharModal()">Fechar</button>
+            <button class="btn btn-success" onclick="gerarPDFCliente(${data.cliente_id})">📄 Gerar PDF deste Cliente</button>
+        </div>
+    `;
+}
+
+async function toggleHistorico(numeroChamado, idx) {
+    const row = document.getElementById(`hist-row-${idx}`);
+    const content = document.getElementById(`hist-content-${idx}`);
+
+    if (row.style.display === 'none' || row.style.display === '') {
+        row.style.display = 'table-row';
+        if (content.dataset.carregado === '1') return;
+        await carregarHistoricoChamado(numeroChamado, idx);
+    } else {
+        row.style.display = 'none';
+    }
+}
+
+async function carregarHistoricoChamado(numeroChamado, idx) {
+    const content = document.getElementById(`hist-content-${idx}`);
+
+    if (historicosCache[numeroChamado]) {
+        renderizarHistorico(historicosCache[numeroChamado], content);
+        content.dataset.carregado = '1';
+        return;
+    }
+
+    try {
+        const resLista = await fetch('/api/chamados/', {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!resLista.ok) { content.innerHTML = '<div class="hist-carregando">Erro ao carregar histórico</div>'; return; }
+        const todos = await resLista.json();
+        const encontrado = todos.find(c => c.numero === numeroChamado);
+
+        if (!encontrado) {
+            content.innerHTML = '<div class="hist-carregando">Chamado não encontrado</div>';
+            return;
+        }
+
+        const resDet = await fetch(`/api/chamados/${encontrado.id}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!resDet.ok) { content.innerHTML = '<div class="hist-carregando">Erro ao carregar histórico</div>'; return; }
+        const chamado = await resDet.json();
+
+        const hists = chamado.historicos || [];
+        historicosCache[numeroChamado] = hists;
+        renderizarHistorico(hists, content);
+        content.dataset.carregado = '1';
+    } catch (err) {
+        content.innerHTML = '<div class="hist-carregando">Erro: ' + escapeHTML(err.message) + '</div>';
+    }
+}
+
+function renderizarHistorico(historicos, container) {
+    if (!historicos || historicos.length === 0) {
+        container.innerHTML = `
+            <div class="hist-titulo">📝 Histórico de atendimento</div>
+            <div class="hist-carregando">Nenhum registro de atendimento encontrado.</div>
+        `;
+        return;
+    }
+
+    const hists = [...historicos].sort((a, b) => {
+        const da = new Date(a.data_atendimento || a.criado_em);
+        const db = new Date(b.data_atendimento || b.criado_em);
+        return db - da;
+    });
+
+    const html = hists.map(h => {
+        const dataHist = h.data_atendimento || h.criado_em;
+        const dataFmt = dataHist ? new Date(dataHist).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '-';
+
+        const horarioHtml = (h.hora_inicio && h.hora_termino)
+            ? `<span class="hist-horario">🕐 ${escapeHTML(h.hora_inicio)} → ${escapeHTML(h.hora_termino)}</span>`
+            : '';
+
+        const tempoHtml = h.tempo_minutos > 0
+            ? `<span class="hist-tempo">${formatarTempo(h.tempo_minutos)}</span>`
+            : '';
+
+        return `
+            <div class="hist-item">
+                <span class="hist-data">${dataFmt}</span>
+                ${horarioHtml}
+                <div class="hist-texto">${escapeHTML(h.descricao || '-')}</div>
+                ${tempoHtml}
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div class="hist-titulo">📝 Histórico de atendimento (${hists.length} registro${hists.length !== 1 ? 's' : ''})</div>
+        ${html}
+    `;
+}
+
+function fecharModal() {
+    document.getElementById('modalDetalhes').classList.remove('active');
+}
+
+document.getElementById('modalDetalhes').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) fecharModal();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
+
+async function gerarPDFGeral() {
+    const ano = document.getElementById('filtroAno').value;
+    const mes = document.getElementById('filtroMes').value;
+    const clienteId = document.getElementById('filtroCliente').value;
+
+    const url = `/api/faturamento/pdf?ano=${ano}&mes=${mes}${clienteId ? `&cliente_id=${clienteId}` : ''}`;
+
+    try {
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) { mostrarErro('Erro ao gerar PDF'); return; }
+        const blob = await res.blob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `faturamento_${ano}_${mes}.pdf`;
+        link.click();
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+async function gerarPDFCliente(clienteId) {
+    if (!clienteId) { mostrarErro('Cliente não identificado'); return; }
+    const ano = document.getElementById('filtroAno').value;
+    const mes = document.getElementById('filtroMes').value;
+
+    try {
+        const res = await fetch(`/api/faturamento/pdf/${clienteId}?ano=${ano}&mes=${mes}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!res.ok) { mostrarErro('Erro ao gerar PDF'); return; }
+        const blob = await res.blob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `faturamento_cliente_${clienteId}_${ano}_${mes}.pdf`;
+        link.click();
+    } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// =================== GUARDA ADMIN (redireciona não-admins) ===================
+(async function() {
+    try {
+        const t = localStorage.getItem('token') || localStorage.getItem('access_token');
+        if (!t) { window.location.href = '/'; return; }
+        const r = await fetch('/api/usuario-logado', { headers: { 'Authorization': 'Bearer ' + t } });
+        if (!r.ok) { window.location.href = '/'; return; }
+        const u = await r.json();
+        const ehAdmin = u.is_admin || u.tipo_usuario === 'admin';
+        if (!ehAdmin) {
+            // Técnico → painel; Cliente → portal; outro → login
+            if (u.tipo_usuario === 'tecnico') window.location.href = '/tecnico/painel';
+            else if (u.tipo_usuario === 'cliente') window.location.href = '/cliente/painel';
+            else window.location.href = '/';
+            return;
+        }
+        // É admin — mostra os links admin-only
+        const link = document.getElementById('linkUsuariosAdmin');
+        if (link) link.style.display = '';
+        const linkCom = document.getElementById('linkComissaoAdmin');
+        if (linkCom) linkCom.style.display = '';
+    } catch(e) { window.location.href = '/'; }
+})();
+</script>
+
+</body>
+</html>
