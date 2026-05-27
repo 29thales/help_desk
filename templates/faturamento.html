@@ -856,6 +856,7 @@ function renderizarModalDetalhes(data) {
 
         <div class="modal-footer-actions">
             <button class="btn btn-secondary" onclick="fecharModal()">Fechar</button>
+            <button class="btn btn-primary" onclick="abrirModalEmail(${data.cliente_id})">📧 Enviar por Email</button>
             <button class="btn btn-success" onclick="gerarPDFCliente(${data.cliente_id})">📄 Gerar PDF deste Cliente</button>
         </div>
     `;
@@ -999,6 +1000,118 @@ async function gerarPDFCliente(clienteId) {
     } catch (err) { mostrarErro('Erro: ' + err.message); }
 }
 
+// =================== TOAST DE SUCESSO ===================
+function mostrarSucesso(msg) {
+    const el = document.getElementById('alertSuccess');
+    el.textContent = '✅ ' + msg;
+    el.style.display = 'block';
+    document.getElementById('alertError').style.display = 'none';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+// =================== ENVIO DE EMAIL ===================
+let _emailClienteIdAtual = null;
+
+async function abrirModalEmail(clienteId) {
+    if (!clienteId) { mostrarErro('Cliente não identificado'); return; }
+    const ano = document.getElementById('filtroAno').value;
+    const mes = document.getElementById('filtroMes').value;
+    if (!ano || !mes) { mostrarErro('Informe ano e mês'); return; }
+
+    _emailClienteIdAtual = clienteId;
+
+    // Fecha modal de detalhes se estiver aberto
+    document.getElementById('modalDetalhes').classList.remove('active');
+
+    // Abre modal de email em estado de loading
+    document.getElementById('emailLoading').style.display = 'block';
+    document.getElementById('emailForm').style.display = 'none';
+    document.getElementById('modalEmail').classList.add('active');
+
+    try {
+        const res = await fetch(`/api/faturamento/email-template/${clienteId}?ano=${ano}&mes=${mes}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!res.ok) {
+            const erro = await res.json().catch(() => ({ detail: 'Erro desconhecido' }));
+            mostrarErro(erro.detail || 'Erro ao carregar template do email');
+            fecharModalEmail();
+            return;
+        }
+        const data = await res.json();
+        document.getElementById('emailDestinatario').value = data.destinatario || '';
+        document.getElementById('emailAssunto').value = data.assunto || '';
+        document.getElementById('emailCorpo').value = data.corpo || '';
+        document.getElementById('emailPeriodo').textContent = `${String(mes).padStart(2,'0')}/${ano}`;
+        document.getElementById('emailLoading').style.display = 'none';
+        document.getElementById('emailForm').style.display = 'block';
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+        fecharModalEmail();
+    }
+}
+
+function fecharModalEmail() {
+    document.getElementById('modalEmail').classList.remove('active');
+    _emailClienteIdAtual = null;
+}
+
+async function enviarEmail() {
+    if (!_emailClienteIdAtual) { mostrarErro('Cliente não identificado'); return; }
+
+    const destinatario = document.getElementById('emailDestinatario').value.trim();
+    const assunto = document.getElementById('emailAssunto').value.trim();
+    const corpo = document.getElementById('emailCorpo').value.trim();
+
+    if (!destinatario) { mostrarErro('Informe o destinatário'); return; }
+    if (!assunto) { mostrarErro('Informe o assunto'); return; }
+    if (!corpo) { mostrarErro('Informe o corpo do email'); return; }
+
+    const ano = parseInt(document.getElementById('filtroAno').value);
+    const mes = parseInt(document.getElementById('filtroMes').value);
+
+    const btn = document.getElementById('btnEnviarEmail');
+    const btnCancel = document.getElementById('btnCancelarEmail');
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btnCancel.disabled = true;
+    btn.innerHTML = '⏳ Enviando...';
+
+    try {
+        const res = await fetch('/api/faturamento/enviar-email', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                cliente_id: _emailClienteIdAtual,
+                ano: ano,
+                mes: mes,
+                destinatario: destinatario,
+                assunto: assunto,
+                corpo: corpo
+            })
+        });
+
+        if (!res.ok) {
+            const erro = await res.json().catch(() => ({ detail: 'Erro desconhecido' }));
+            mostrarErro(erro.detail || 'Erro ao enviar email');
+            return;
+        }
+
+        const data = await res.json();
+        mostrarSucesso(data.mensagem || 'Email enviado com sucesso');
+        fecharModalEmail();
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btnCancel.disabled = false;
+        btn.innerHTML = textoOriginal;
+    }
+}
+
 // =================== GUARDA ADMIN (redireciona não-admins) ===================
 (async function() {
     try {
@@ -1025,5 +1138,46 @@ async function gerarPDFCliente(clienteId) {
 </script>
 
     <script src="/static/js/mobile.js"></script>
+
+<!-- ============= MODAL ENVIAR EMAIL ============= -->
+<div class="modal-overlay" id="modalEmail">
+    <div class="modal" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3>📧 Enviar Faturamento por Email</h3>
+            <button class="modal-close" onclick="fecharModalEmail()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="emailLoading" style="text-align:center; padding:40px; color:#666;">
+                ⏳ Carregando template...
+            </div>
+            <div id="emailForm" style="display:none;">
+                <div style="background:#e8f4fd; border-left:4px solid #2196F3; padding:12px 15px; margin-bottom:20px; border-radius:4px; font-size:13px; color:#0d47a1;">
+                    📎 O PDF de faturamento de <strong id="emailPeriodo"></strong> será anexado automaticamente ao email.
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">Para:</label>
+                    <input type="email" id="emailDestinatario" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;" placeholder="cliente@empresa.com" />
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">Assunto:</label>
+                    <input type="text" id="emailAssunto" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;" />
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">Mensagem:</label>
+                    <textarea id="emailCorpo" rows="12" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px; font-family:inherit; resize:vertical;"></textarea>
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                    <button class="btn btn-secondary" onclick="fecharModalEmail()" id="btnCancelarEmail">Cancelar</button>
+                    <button class="btn btn-success" onclick="enviarEmail()" id="btnEnviarEmail">📧 Enviar Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ============= FIM MODAL EMAIL ============= -->
 </body>
 </html>
