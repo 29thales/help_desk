@@ -521,12 +521,14 @@ tr { cursor: pointer; }
     .calc-valor-box .operador { display: none; }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 
 <header>
     <h1>🎫 Chamados</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/clientes/pagina">👥 Clientes</a>
         <a href="/chamados/pagina">🎫 Chamados</a>
@@ -2146,5 +2148,6 @@ function f2Fechar(id) { document.getElementById(id).classList.remove('active'); 
 #f2ModalAtrib.active, #f2ModalTransf.active, #f2ModalDev.active, #f2ModalHist.active { display:flex !important; }
 </style>
 
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

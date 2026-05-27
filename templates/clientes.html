@@ -259,13 +259,15 @@ tr:hover { background: #f9f9ff; }
     td, th { padding: 8px 5px; font-size: 12px; }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 
 <body>
 
 <header>
     <h1>👥 Clientes</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/clientes/pagina">👥 Clientes</a>
         <a href="/comissao/pagina" id="linkComissaoAdmin" style="display:none;">💼 Comissões</a>
@@ -303,8 +305,8 @@ tr:hover { background: #f9f9ff; }
                     <input id="telefone" placeholder="(00) 00000-0000">
                 </div>
                 <div class="form-group">
-                    <label>CNPJ</label>
-                    <input id="cnpj" placeholder="00.000.000/0000-00">
+                    <label>CPF/CNPJ</label>
+                    <input id="cnpj" placeholder="CPF ou CNPJ" maxlength="18" oninput="formatarDocumento(this)" onblur="validarDocumentoCampo(this)"><small id="cnpjFeedback" style="color: #888; font-size: 11px; display: none;"></small>
                 </div>
                 <div class="form-group">
                     <label>Valor/Hora (R$)</label>
@@ -461,6 +463,125 @@ function filtrarClientes() {
     renderizarTabela(filtrados);
 }
 
+
+// =================== MÁSCARA E VALIDAÇÃO CPF/CNPJ ===================
+
+function formatarDocumento(input) {
+    let v = (input.value || '').replace(/\D/g, '');
+    if (v.length > 14) v = v.slice(0, 14);
+
+    let formatado = v;
+    if (v.length <= 11) {
+        formatado = v
+            .replace(/^(\d{3})(\d)/, '$1.$2')
+            .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+    } else {
+        formatado = v
+            .replace(/^(\d{2})(\d)/, '$1.$2')
+            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4')
+            .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+    }
+    input.value = formatado;
+
+    const fb = document.getElementById('cnpjFeedback');
+    if (fb) {
+        fb.style.display = 'none';
+        input.style.borderColor = '';
+    }
+}
+
+function _digitos(v) {
+    return (v || '').replace(/\D/g, '');
+}
+
+function validarCPF(cpf) {
+    cpf = _digitos(cpf);
+    if (cpf.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+    let soma = 0;
+    for (let i = 0; i < 9; i++) soma += parseInt(cpf[i]) * (10 - i);
+    let d1 = (soma * 10) % 11;
+    if (d1 === 10) d1 = 0;
+    if (d1 !== parseInt(cpf[9])) return false;
+
+    soma = 0;
+    for (let i = 0; i < 10; i++) soma += parseInt(cpf[i]) * (11 - i);
+    let d2 = (soma * 10) % 11;
+    if (d2 === 10) d2 = 0;
+    return d2 === parseInt(cpf[10]);
+}
+
+function validarCNPJ(cnpj) {
+    cnpj = _digitos(cnpj);
+    if (cnpj.length !== 14) return false;
+    if (/^(\d)\1{13}$/.test(cnpj)) return false;
+
+    const p1 = [5,4,3,2,9,8,7,6,5,4,3,2];
+    const p2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
+
+    let soma = 0;
+    for (let i = 0; i < 12; i++) soma += parseInt(cnpj[i]) * p1[i];
+    let d1 = soma % 11;
+    d1 = d1 < 2 ? 0 : 11 - d1;
+    if (d1 !== parseInt(cnpj[12])) return false;
+
+    soma = 0;
+    for (let i = 0; i < 13; i++) soma += parseInt(cnpj[i]) * p2[i];
+    let d2 = soma % 11;
+    d2 = d2 < 2 ? 0 : 11 - d2;
+    return d2 === parseInt(cnpj[13]);
+}
+
+function validarDocumentoCampo(input) {
+    const fb = document.getElementById('cnpjFeedback');
+    const d = _digitos(input.value);
+
+    if (d.length === 0) {
+        input.style.borderColor = '';
+        if (fb) fb.style.display = 'none';
+        return true;
+    }
+
+    let valido = false;
+    let tipo = '';
+    if (d.length === 11) {
+        valido = validarCPF(d);
+        tipo = 'CPF';
+    } else if (d.length === 14) {
+        valido = validarCNPJ(d);
+        tipo = 'CNPJ';
+    } else {
+        if (fb) {
+            fb.textContent = 'Digite um CPF (11 digitos) ou CNPJ (14 digitos). Voce digitou ' + d.length + '.';
+            fb.style.color = '#e74c3c';
+            fb.style.display = 'block';
+        }
+        input.style.borderColor = '#e74c3c';
+        return false;
+    }
+
+    if (valido) {
+        input.style.borderColor = '#27ae60';
+        if (fb) {
+            fb.textContent = tipo + ' valido';
+            fb.style.color = '#27ae60';
+            fb.style.display = 'block';
+        }
+        return true;
+    } else {
+        input.style.borderColor = '#e74c3c';
+        if (fb) {
+            fb.textContent = tipo + ' invalido (digito verificador nao confere)';
+            fb.style.color = '#e74c3c';
+            fb.style.display = 'block';
+        }
+        return false;
+    }
+}
+
 // =================== CADASTRAR / ATUALIZAR ===================
 document.getElementById('formCliente').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -478,6 +599,14 @@ document.getElementById('formCliente').addEventListener('submit', async (e) => {
 
     if (!cliente.nome || !cliente.email) {
         mostrarErro('Nome e email são obrigatórios!');
+        return;
+    }
+
+    // Valida CPF/CNPJ antes de enviar (se preenchido)
+    const cnpjInput = document.getElementById('cnpj');
+    if (cnpjInput.value.trim() && !validarDocumentoCampo(cnpjInput)) {
+        mostrarErro('CPF/CNPJ inválido. Corrija antes de salvar.');
+        cnpjInput.focus();
         return;
     }
 
@@ -520,7 +649,17 @@ async function editar(id) {
         document.getElementById('empresa').value = c.empresa || '';
         document.getElementById('email').value = c.email || '';
         document.getElementById('telefone').value = c.telefone || '';
-        document.getElementById('cnpj').value = c.cnpj || '';
+        // Carrega CPF/CNPJ aplicando a máscara conforme o tamanho
+        const cnpjInputEdit = document.getElementById('cnpj');
+        cnpjInputEdit.value = c.cnpj || '';
+        if (c.cnpj) {
+            formatarDocumento(cnpjInputEdit);
+            validarDocumentoCampo(cnpjInputEdit);
+        } else {
+            cnpjInputEdit.style.borderColor = '';
+            const fb = document.getElementById('cnpjFeedback');
+            if (fb) fb.style.display = 'none';
+        }
         document.getElementById('endereco').value = c.endereco || '';
         document.getElementById('responsavel').value = c.responsavel || '';
         document.getElementById('valor_hora').value = c.valor_hora || 130;
@@ -611,5 +750,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

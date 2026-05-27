@@ -172,12 +172,14 @@ tr:last-child td { border-bottom: none; }
     .stats-top { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 
 <header>
     <h1>👥 Usuários</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/clientes/pagina">👥 Clientes</a>
         <a href="/chamados/pagina">🎫 Chamados</a>
@@ -783,5 +785,6 @@ document.addEventListener('DOMContentLoaded', carregar);
     } catch(e) { window.location.href = '/'; }
 })();
 </script>
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

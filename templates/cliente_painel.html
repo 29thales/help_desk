@@ -174,15 +174,17 @@ tr:last-child td { border-bottom: none; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 
 <header>
     <div class="titulo">
         <h1>🎫 Portal do Cliente</h1>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
         <div class="empresa" id="nomeEmpresa">—</div>
     </div>
-    <nav>
+    <nav id="mainMenu">
         <span class="nome-user" id="nomeUser">—</span>
         <a href="/trocar-senha" class="btn-senha">🔑 Trocar senha</a>
         <button class="btn-logout" onclick="logout()">🚪 Sair</button>
@@ -531,5 +533,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') {
 
 document.addEventListener('DOMContentLoaded', carregar);
 </script>
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

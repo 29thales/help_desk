@@ -169,12 +169,14 @@ tr:last-child td { border-bottom: none; }
     .modal-body .row-2 { grid-template-columns: 1fr; }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 
 <header>
     <h1>🔧 Serviços Técnicos</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/clientes/pagina">👥 Clientes</a>
         <a href="/chamados/pagina">🎫 Chamados</a>
@@ -564,5 +566,6 @@ document.addEventListener('DOMContentLoaded', carregar);
     } catch(e) { window.location.href = '/'; }
 })();
 </script>
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

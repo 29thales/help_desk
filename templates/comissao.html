@@ -148,12 +148,14 @@ tr:last-child td { border-bottom: none; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 
 <header>
     <h1>💼 Comissões dos Técnicos</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/clientes/pagina">👥 Clientes</a>
         <a href="/chamados/pagina">🎫 Chamados</a>
@@ -610,5 +612,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     carregar();
 });
 </script>
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

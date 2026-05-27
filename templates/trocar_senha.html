@@ -47,6 +47,7 @@ body {
 .msg.ok { background: #d4edda; color: #155724; }
 .help-text { font-size: 11px; color: #888; margin-top: 3px; }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 <div class="card">
@@ -142,5 +143,6 @@ async function trocar() {
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('keydown', e => { if (e.key === 'Enter') trocar(); });
 </script>
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

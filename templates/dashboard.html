@@ -249,13 +249,15 @@
             .cards { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 
 <body>
 
 <header>
     <h1>🛠️ Help Desk</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <span id="nomeUsuario">Carregando...</span>
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/clientes/pagina">👥 Clientes</a>
@@ -743,5 +745,6 @@ document.addEventListener('DOMContentLoaded', carregarDashboard);
 })();
 </script>
 
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

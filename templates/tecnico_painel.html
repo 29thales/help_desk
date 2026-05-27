@@ -185,12 +185,14 @@ tr:last-child td { border-bottom: none; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 
 <header>
     <h1>🔧 Painel do Técnico</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <span class="nome-user" id="nomeUser">—</span>
         <a href="/tecnico/painel" class="active">🎯 Meus Chamados</a>
         <button class="btn-logout" onclick="logout()">🚪 Sair</button>
@@ -956,5 +958,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') {
 
 document.addEventListener('DOMContentLoaded', carregar);
 </script>
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>

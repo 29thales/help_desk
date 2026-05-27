@@ -300,12 +300,14 @@ tfoot td {
     .table-header .search-box { width: 100%; }
 }
 </style>
+    <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
 <body>
 
 <header>
     <h1>🛠️ Help Desk</h1>
-    <nav>
+    <button class="menu-toggle" aria-label="Abrir menu">☰</button>
+    <nav id="mainMenu">
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/clientes/pagina">👥 Clientes</a>
         <a href="/chamados/pagina">🎫 Chamados</a>
@@ -1022,5 +1024,6 @@ async function gerarPDFCliente(clienteId) {
 })();
 </script>
 
+    <script src="/static/js/mobile.js"></script>
 </body>
 </html>
