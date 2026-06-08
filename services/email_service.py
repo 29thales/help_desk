@@ -55,7 +55,7 @@ def enviar_email_faturamento(destinatario, assunto, corpo, pdf_bytes, nome_arqui
     except ValueError as e:
         return False, f"Configuracao de email invalida: {e}"
 
-    msg = MIMEMultipart()
+    msg = MIMEMultipart("mixed")
     msg["From"] = f"{nome_remetente} <{config['sender_email']}>"
     msg["To"] = destinatario
     msg["Subject"] = assunto
@@ -70,8 +70,10 @@ def enviar_email_faturamento(destinatario, assunto, corpo, pdf_bytes, nome_arqui
         </body>
     </html>
     """
-    msg.attach(MIMEText(corpo, "plain", "utf-8"))
-    msg.attach(MIMEText(corpo_completo_html, "html", "utf-8"))
+    corpo_alt = MIMEMultipart("alternative")
+    corpo_alt.attach(MIMEText(corpo, "plain", "utf-8"))
+    corpo_alt.attach(MIMEText(corpo_completo_html, "html", "utf-8"))
+    msg.attach(corpo_alt)
 
     if pdf_bytes:
         anexo = MIMEApplication(pdf_bytes, _subtype="pdf")
@@ -118,12 +120,12 @@ def montar_template_faturamento(detalhe_cliente):
     assunto = f"Faturamento {empresa} - {mes:02d}/{ano} - RNS TECH"
 
     corpo = (
-        f"Ola {nome},\n\n"
-        f"Segue em anexo o relatorio de faturamento referente a competencia {mes:02d}/{ano}.\n\n"
+        f"Olá {nome},\n\n"
+        f"Segue em anexo o relatório de faturamento referente à competência {mes:02d}/{ano}.\n\n"
         f"Resumo:\n"
         f"- Chamados finalizados: {qtd}\n"
         f"- Total apurado: {_formatar_moeda(total)}\n\n"
-        f"Em caso de duvidas, estamos a disposicao.\n\n"
+        f"Em caso de dúvidas, estamos à disposição.\n\n"
         f"Atenciosamente,\n"
         f"RNS TECH"
     )
