@@ -22,10 +22,7 @@ async def criar_cliente(
     db: Session = Depends(get_db),
     usuario=Depends(obter_usuario_atual)
 ):
-    cliente_existente = db.query(Cliente).filter(Cliente.email == cliente.email).first()
-
-    if cliente_existente:
-        raise HTTPException(status_code=400, detail="Cliente já existe com esse email")
+    # validacao de email duplicado removida - agora aceita multiplos emails por cliente
 
     dados = cliente.dict() if hasattr(cliente, 'dict') else cliente.model_dump()
     novo_cliente = Cliente(**dados)

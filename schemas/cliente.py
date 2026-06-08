@@ -80,7 +80,7 @@ def _validar_documento(valor):
 
 class ClienteBase(BaseModel):
     nome: str
-    email: EmailStr
+    email: str  # aceita varios emails separados por virgula/ponto-e-virgula
     telefone: Optional[str] = None
     empresa: Optional[str] = None
     cnpj: Optional[str] = None
@@ -93,6 +93,20 @@ class ClienteBase(BaseModel):
     def validar_cnpj(cls, v):
         return _validar_documento(v)
 
+    @field_validator("email")
+    @classmethod
+    def validar_emails(cls, v):
+        if v is None or v == "":
+            raise ValueError("Informe pelo menos um email")
+        import re as _re
+        emails = [e.strip() for e in _re.split(r"[,;]", v) if e.strip()]
+        if not emails:
+            raise ValueError("Informe pelo menos um email")
+        for email in emails:
+            if "@" not in email or "." not in email.split("@")[-1]:
+                raise ValueError(f"Email invalido: {email}")
+        return ", ".join(emails)  # normaliza
+
 
 class ClienteCreate(ClienteBase):
     pass
@@ -100,7 +114,7 @@ class ClienteCreate(ClienteBase):
 
 class ClienteUpdate(BaseModel):
     nome: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None  # aceita varios emails separados por virgula/ponto-e-virgula
     telefone: Optional[str] = None
     empresa: Optional[str] = None
     cnpj: Optional[str] = None
@@ -113,6 +127,20 @@ class ClienteUpdate(BaseModel):
     @classmethod
     def validar_cnpj(cls, v):
         return _validar_documento(v)
+
+    @field_validator("email")
+    @classmethod
+    def validar_emails(cls, v):
+        if v is None or v == "":
+            raise ValueError("Informe pelo menos um email")
+        import re as _re
+        emails = [e.strip() for e in _re.split(r"[,;]", v) if e.strip()]
+        if not emails:
+            raise ValueError("Informe pelo menos um email")
+        for email in emails:
+            if "@" not in email or "." not in email.split("@")[-1]:
+                raise ValueError(f"Email invalido: {email}")
+        return ", ".join(emails)  # normaliza
 
 
 class ClienteResposta(BaseModel):

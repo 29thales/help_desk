@@ -16,7 +16,7 @@ class Cliente(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, nullable=False)
+    email = Column(String(500), nullable=False)  # aceita varios emails separados por virgula
     telefone = Column(String(20), nullable=True)
     empresa = Column(String(255), nullable=True)
     cnpj = Column(String(20), nullable=True)
