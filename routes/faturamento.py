@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from database import get_db
@@ -75,7 +76,7 @@ class EnviarEmailFaturamentoInput(BaseModel):
     cliente_id: int
     ano: int
     mes: int
-    destinatario: EmailStr
+    destinatarios: str  # aceita varios emails separados por virgula ou ponto-e-virgula
     assunto: str
     corpo: str
 
@@ -148,8 +149,19 @@ def enviar_email(
 
     nome_arquivo = f"faturamento_{cliente.nome.replace(' ', '_')}_{dados.ano}_{dados.mes:02d}.pdf"
 
+
+    # Parse da lista de destinatarios: aceita virgula ou ponto-e-virgula
+    lista_destinatarios = [
+        e.strip() for e in re.split(r"[,;]", dados.destinatarios) if e.strip()
+    ]
+    if not lista_destinatarios:
+        raise HTTPException(status_code=400, detail="Informe pelo menos um destinatario")
+    for email in lista_destinatarios:
+        if "@" not in email or "." not in email.split("@")[-1]:
+            raise HTTPException(status_code=400, detail=f"Email invalido: {email}")
+
     sucesso, mensagem = enviar_email_faturamento(
-        destinatario=str(dados.destinatario),
+        destinatarios=lista_destinatarios,
         assunto=dados.assunto,
         corpo=dados.corpo,
         pdf_bytes=pdf_bytes,

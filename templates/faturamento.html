@@ -1059,11 +1059,11 @@ function fecharModalEmail() {
 async function enviarEmail() {
     if (!_emailClienteIdAtual) { mostrarErro('Cliente não identificado'); return; }
 
-    const destinatario = document.getElementById('emailDestinatario').value.trim();
+    const destinatarios = document.getElementById('emailDestinatario').value.trim();
     const assunto = document.getElementById('emailAssunto').value.trim();
     const corpo = document.getElementById('emailCorpo').value.trim();
 
-    if (!destinatario) { mostrarErro('Informe o destinatário'); return; }
+    if (!destinatarios) { mostrarErro('Informe pelo menos um destinatário'); return; }
     if (!assunto) { mostrarErro('Informe o assunto'); return; }
     if (!corpo) { mostrarErro('Informe o corpo do email'); return; }
 
@@ -1088,7 +1088,7 @@ async function enviarEmail() {
                 cliente_id: _emailClienteIdAtual,
                 ano: ano,
                 mes: mes,
-                destinatario: destinatario,
+                destinatarios: destinatarios,
                 assunto: assunto,
                 corpo: corpo
             })
@@ -1156,8 +1156,8 @@ async function enviarEmail() {
                 </div>
 
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">Para:</label>
-                    <input type="email" id="emailDestinatario" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;" placeholder="cliente@empresa.com" />
+                    <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">Para (separe vários com vírgula ou ponto-e-vírgula):</label>
+                    <textarea id="emailDestinatario" rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px; font-family:inherit; resize:vertical;" placeholder="cliente@empresa.com, financeiro@empresa.com"></textarea>
                 </div>
 
                 <div style="margin-bottom:15px;">

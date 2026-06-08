@@ -49,7 +49,7 @@ def _salvar_em_enviados_imap(config, mensagem_bytes):
         print(f"Aviso: nao foi possivel salvar em Enviados do Gmail: {e}")
 
 
-def enviar_email_faturamento(destinatario, assunto, corpo, pdf_bytes, nome_arquivo_pdf, nome_remetente="RNS TECH"):
+def enviar_email_faturamento(destinatarios, assunto, corpo, pdf_bytes, nome_arquivo_pdf, nome_remetente="RNS TECH"):
     try:
         config = _config_email()
     except ValueError as e:
@@ -57,7 +57,7 @@ def enviar_email_faturamento(destinatario, assunto, corpo, pdf_bytes, nome_arqui
 
     msg = MIMEMultipart("mixed")
     msg["From"] = f"{nome_remetente} <{config['sender_email']}>"
-    msg["To"] = destinatario
+    msg["To"] = ", ".join(destinatarios) if isinstance(destinatarios, list) else destinatarios
     msg["Subject"] = assunto
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid()
@@ -93,14 +93,14 @@ def enviar_email_faturamento(destinatario, assunto, corpo, pdf_bytes, nome_arqui
             "(3) SENDER_EMAIL bate com a conta da senha de app"
         )
     except smtplib.SMTPRecipientsRefused:
-        return False, f"Destinatario recusado: {destinatario}"
+        return False, f"Destinatario(s) recusado(s): {destinatarios}"
     except smtplib.SMTPException as e:
         return False, f"Erro SMTP: {e}"
     except Exception as e:
         return False, f"Erro inesperado ao enviar email: {e}"
 
     _salvar_em_enviados_imap(config, msg.as_bytes())
-    return True, f"Email enviado com sucesso para {destinatario}"
+    return True, f"Email enviado com sucesso para {len(destinatarios) if isinstance(destinatarios, list) else 1} destinatario(s)"
 
 
 def _formatar_moeda(valor):
