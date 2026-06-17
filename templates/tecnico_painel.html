@@ -184,6 +184,38 @@ tr:last-child td { border-bottom: none; }
     .row-2 { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* =============================================
+   TOGGLE DE MODO (horário vs minutos diretos) - igual ao admin
+   ============================================= */
+.modo-toggle-tec {
+    display: flex; gap: 8px; margin-bottom: 12px;
+    background: white; padding: 4px; border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+.modo-toggle-tec button {
+    flex: 1; padding: 8px 12px; border: none; background: transparent;
+    border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
+    color: #666; transition: all 0.2s; font-family: inherit;
+}
+.modo-toggle-tec button.active { background: #667eea; color: white; }
+
+.bloco-minutos-direto-tec {
+    background: #f8f9fb; padding: 12px; border-radius: 8px; margin-bottom: 12px;
+    border: 1px solid #e0e0e0;
+}
+.bloco-minutos-direto-tec label {
+    font-size: 11px; color: #666; font-weight: 600;
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+    display: block;
+}
+.bloco-minutos-direto-tec input[type="number"] {
+    width: 140px; padding: 8px 10px;
+    border: 2px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: inherit;
+}
+.bloco-minutos-direto-tec input[type="number"]:focus { outline: none; border-color: #667eea; }
+
 </style>
     <link rel="stylesheet" href="/static/css/mobile.css">
 </head>
@@ -300,6 +332,12 @@ tr:last-child td { border-bottom: none; }
                     <div class="help-text">Valor total = quantidade × valor do serviço no catálogo.</div>
                 </div>
             </div>
+            <!-- Toggle entre modo horário e minutos direto (só aparece pra suporte_usuario) -->
+            <div class="modo-toggle-tec" id="toggleModoTec" style="display:none;">
+                <button type="button" id="btnModoHorario" class="active" onclick="trocarModoTec('horario')">🕐 Por horário (início/fim)</button>
+                <button type="button" id="btnModoDireto" onclick="trocarModoTec('direto')">⏱️ Por tempo direto (minutos)</button>
+            </div>
+
             <div class="row-2" id="grpHoras">
                 <div class="form-group">
                     <label>Hora início</label>
@@ -309,6 +347,11 @@ tr:last-child td { border-bottom: none; }
                     <label>Hora término</label>
                     <input type="time" id="histFim">
                 </div>
+            </div>
+
+            <div class="bloco-minutos-direto-tec" id="grpMinutosDireto" style="display:none;">
+                <label>Tempo gasto (minutos)</label>
+                <input type="number" id="histMinutosDireto" min="1" placeholder="Ex: 30">
             </div>
             <div class="form-group">
                 <label>Descrição do atendimento *</label>
@@ -746,12 +789,21 @@ async function abrirDetalhe(chamadoId) {
         // Configura o form de histórico conforme tipo
         const grpHoras = document.getElementById('grpHoras');
         const grpTempo = document.getElementById('grpTempoDireto');
+        const toggleModoTec = document.getElementById('toggleModoTec');
+        const grpMinDireto = document.getElementById('grpMinutosDireto');
         if (c.tipo_servico === 'suporte_tecnico') {
             grpHoras.style.display = 'none';
             grpTempo.style.display = '';
+            toggleModoTec.style.display = 'none';
+            grpMinDireto.style.display = 'none';
         } else {
+            toggleModoTec.style.display = 'flex';
             grpHoras.style.display = '';
+            grpMinDireto.style.display = 'none';
             grpTempo.style.display = 'none';
+            document.getElementById('btnModoHorario').classList.add('active');
+            document.getElementById('btnModoDireto').classList.remove('active');
+            document.getElementById('histMinutosDireto').value = '';
         }
 
         // Botão Finalizar: só aparece se ainda não finalizado
@@ -824,10 +876,22 @@ async function salvarHistorico() {
         const min = parseInt(document.getElementById('histTempoMin').value);
         if (!isNaN(min) && min > 0) payload.tempo_minutos = min;
     } else {
-        const hi = document.getElementById('histInicio').value;
-        const hf = document.getElementById('histFim').value;
-        if (hi) payload.hora_inicio = hi;
-        if (hf) payload.hora_termino = hf;
+        // Suporte ao usuário: vê qual modo está ativo
+        const modoDireto = document.getElementById('btnModoDireto').classList.contains('active');
+        if (modoDireto) {
+            const min = parseInt(document.getElementById('histMinutosDireto').value);
+            if (!isNaN(min) && min > 0) {
+                payload.tempo_minutos = min;
+            } else {
+                mostrarErro('Informe o tempo em minutos');
+                return;
+            }
+        } else {
+            const hi = document.getElementById('histInicio').value;
+            const hf = document.getElementById('histFim').value;
+            if (hi) payload.hora_inicio = hi;
+            if (hf) payload.hora_termino = hf;
+        }
     }
 
     try {
@@ -957,6 +1021,26 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') {
 });
 
 document.addEventListener('DOMContentLoaded', carregar);
+
+// Alterna entre modo "horário início/fim" e "minutos direto" no painel do técnico
+function trocarModoTec(modo) {
+    const btnHorario = document.getElementById('btnModoHorario');
+    const btnDireto = document.getElementById('btnModoDireto');
+    const grpHoras = document.getElementById('grpHoras');
+    const grpMinDireto = document.getElementById('grpMinutosDireto');
+    if (modo === 'direto') {
+        btnHorario.classList.remove('active');
+        btnDireto.classList.add('active');
+        grpHoras.style.display = 'none';
+        grpMinDireto.style.display = 'block';
+    } else {
+        btnDireto.classList.remove('active');
+        btnHorario.classList.add('active');
+        grpHoras.style.display = '';
+        grpMinDireto.style.display = 'none';
+    }
+}
+
 </script>
     <script src="/static/js/mobile.js"></script>
 </body>
