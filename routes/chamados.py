@@ -398,10 +398,18 @@ async def atualizar_chamado(
 
 # =================== FINALIZAÇÃO ===================
 
+class FinalizarInput(BaseModel):
+    # data_termino opcional: ADMIN pode lancar retroativo (corrige histórico).
+    # Se vier vazio ou usuario nao for admin, ignora e usa datetime.now()
+    data_termino: str | None = None
+
+
 class FinalizarTecnicoInput(BaseModel):
     # Usado pelo ADMIN — permite sobrescrever valor/quantidade
     valor_unitario: float
     quantidade: int
+    # data_termino opcional: ADMIN pode lancar retroativo
+    data_termino: str | None = None
 
 
 @router.post("/{chamado_id}/finalizar-tecnico")
@@ -443,7 +451,18 @@ async def finalizar_chamado_tecnico(
     chamado.valor_total = valor_total
     chamado.tempo_gasto_minutos = quantidade
     chamado.status = "finalizado"
-    if not chamado.data_termino:
+    # ADMIN ja garantido neste endpoint - permite data retroativa
+    data_retro_t = None
+    if dados.data_termino:
+        try:
+            data_retro_t = datetime.fromisoformat(dados.data_termino)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Data de termino invalida (use YYYY-MM-DD ou YYYY-MM-DDTHH:MM)")
+    if data_retro_t:
+        chamado.data_termino = data_retro_t
+        if chamado.data_inicio and chamado.data_inicio > data_retro_t:
+            chamado.data_inicio = data_retro_t
+    elif not chamado.data_termino:
         chamado.data_termino = datetime.now()
 
     db.commit()
@@ -454,6 +473,7 @@ async def finalizar_chamado_tecnico(
 @router.post("/{chamado_id}/finalizar")
 async def finalizar_chamado(
     chamado_id: int,
+    dados: FinalizarInput | None = None,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(obter_usuario_atual),
 ):
@@ -523,7 +543,18 @@ async def finalizar_chamado(
         recalcular_chamado(chamado, db)
 
     chamado.status = "finalizado"
-    if not chamado.data_termino:
+    # ADMIN pode passar data_termino retroativa; tecnico sempre usa data atual
+    data_retro = None
+    if dados and dados.data_termino and eh_admin:
+        try:
+            data_retro = datetime.fromisoformat(dados.data_termino)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Data de termino invalida (use YYYY-MM-DD ou YYYY-MM-DDTHH:MM)")
+    if data_retro:
+        chamado.data_termino = data_retro
+        if chamado.data_inicio and chamado.data_inicio > data_retro:
+            chamado.data_inicio = data_retro
+    elif not chamado.data_termino:
         chamado.data_termino = datetime.now()
 
     db.commit()

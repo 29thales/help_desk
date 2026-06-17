@@ -1488,6 +1488,11 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
 
 async function mudarStatus(id, status) {
+    // Finalizar abre modal customizado com seletor de data (admin pode retroativo)
+    if (status === 'finalizado') {
+        abrirModalFinalizar(id);
+        return;
+    }
     const label = { 'finalizado': 'finalizar', 'cancelado': 'cancelar', 'aberto': 'reabrir', 'em_atendimento': 'mover para atendimento' };
     if (!confirm(`Deseja ${label[status]} este chamado?`)) return;
     try {
@@ -1495,6 +1500,84 @@ async function mudarStatus(id, status) {
         if (res.ok) { mostrarSucesso('Status atualizado!'); carregarChamados(); abrirDetalhe(id); }
         else { mostrarErro('Erro ao atualizar'); }
     } catch (err) { mostrarErro('Erro: ' + err.message); }
+}
+
+// ============================================================
+// MODAL FINALIZAR COM DATA (admin pode lancar retroativo)
+// ============================================================
+function abrirModalFinalizar(chamadoId) {
+    const existente = document.getElementById('modalFinalizarComData');
+    if (existente) existente.remove();
+
+    const hoje = new Date();
+    const dataLocal = hoje.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.id = 'modalFinalizarComData';
+    overlay.innerHTML = `
+        <div class="modal" style="max-width: 460px;">
+            <div class="modal-header">
+                <h3>✅ Finalizar Chamado</h3>
+                <button class="modal-close" onclick="fecharModalFinalizar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom:16px; color:#555;">
+                    Em que data este chamado foi finalizado?
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">Data de finalização:</label>
+                    <input type="date" id="finalizarDataInput" value="${dataLocal}" max="${dataLocal}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+                    <div style="margin-top:6px; font-size:12px; color:#888;">
+                        💡 Para lançamentos retroativos (corrigir histórico), escolha a data correta. O faturamento agrupa pelo mês desta data.
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                    <button class="btn btn-secondary" onclick="fecharModalFinalizar()">Cancelar</button>
+                    <button class="btn btn-success" onclick="confirmarFinalizarComData(${chamadoId})">✓ Finalizar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) fecharModalFinalizar();
+    });
+}
+
+function fecharModalFinalizar() {
+    const m = document.getElementById('modalFinalizarComData');
+    if (m) m.remove();
+}
+
+async function confirmarFinalizarComData(chamadoId) {
+    const dataInput = document.getElementById('finalizarDataInput');
+    const dataValor = dataInput ? dataInput.value : '';
+    if (!dataValor) { mostrarErro('Informe a data de finalização'); return; }
+
+    // Monta o body. Manda data_termino com hora 23:59 do dia escolhido
+    // (assim entra dentro do dia mesmo em fusos)
+    const dataTermino = dataValor + 'T23:59:00';
+    const body = { status: 'finalizado', data_termino: dataTermino };
+
+    try {
+        const res = await fetch(`/api/chamados/${chamadoId}`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify(body)
+        });
+        if (res.ok) {
+            mostrarSucesso('Chamado finalizado!');
+            fecharModalFinalizar();
+            carregarChamados();
+            abrirDetalhe(chamadoId);
+        } else {
+            const err = await res.json().catch(() => ({ detail: 'Erro desconhecido' }));
+            mostrarErro(err.detail || 'Erro ao finalizar');
+        }
+    } catch (err) {
+        mostrarErro('Erro: ' + err.message);
+    }
 }
 
 async function editarChamado(id) {
@@ -1862,6 +1945,14 @@ function abrirModalFinalizarTecnico(chamadoId) {
                         </div>
                     </div>
 
+                    <div style="margin-top:18px; padding:14px; background:#f8f9fa; border-radius:6px; border-left:3px solid #3498db;">
+                        <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">📅 Data de finalização:</label>
+                        <input type="date" id="finDataTermino" value="${new Date().toISOString().slice(0,10)}" max="${new Date().toISOString().slice(0,10)}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+                        <div style="margin-top:6px; font-size:12px; color:#666;">
+                            💡 Para chamados retroativos, escolha a data correta — o faturamento agrupa pelo mês desta data.
+                        </div>
+                    </div>
+
                     <div class="finalizar-dica">
                         💡 <strong>Dica:</strong> O valor padrão do serviço foi pré-preenchido. Você pode ajustar se necessário (desconto, valor especial, etc.). A quantidade vem dos registros do histórico.
                     </div>
@@ -1897,19 +1988,28 @@ function atualizarCalcFinalizar() {
 async function confirmarFinalizarTecnico(chamadoId) {
     const valor = parseFloat(document.getElementById('finValorUnitario').value) || 0;
     const qtd = parseInt(document.getElementById('finQuantidade').value) || 0;
+    const dataInput = document.getElementById('finDataTermino');
+    const dataValor = dataInput ? dataInput.value : '';
 
     if (valor < 0) { mostrarErro('Valor unitário não pode ser negativo'); return; }
     if (qtd < 1) { mostrarErro('Quantidade precisa ser pelo menos 1'); return; }
+    if (!dataValor) { mostrarErro('Informe a data de finalização'); return; }
 
     if (valor === 0) {
         if (!confirm('Valor unitário está zerado. Confirma finalizar com R$ 0,00?')) return;
     }
 
+    const body = {
+        valor_unitario: valor,
+        quantidade: qtd,
+        data_termino: dataValor + 'T23:59:00'
+    };
+
     try {
         const res = await fetch(`/api/chamados/${chamadoId}/finalizar-tecnico`, {
             method: 'POST',
             headers: authHeaders(),
-            body: JSON.stringify({ valor_unitario: valor, quantidade: qtd })
+            body: JSON.stringify(body)
         });
         if (res.ok) {
             mostrarSucesso('Chamado finalizado com sucesso!');
