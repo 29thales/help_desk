@@ -399,10 +399,27 @@ tr:last-child td { border-bottom: none; }
             <!-- Bloco que aparece SÓ se suporte técnico -->
             <div class="form-group" id="grpServico" style="display:none;">
                 <label>Serviço técnico *</label>
-                <select id="novoServico">
-                    <option value="">— Selecione um serviço —</option>
-                </select>
-                <div class="help-text">Se o serviço que você precisa não está na lista, peça ao admin para cadastrar.</div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select id="novoServico" style="flex:1;">
+                        <option value="">— Selecione um serviço —</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="adicionarServicoTecnico()" style="white-space:nowrap;">➕ Adicionar</button>
+                </div>
+                <div class="help-text">Selecione e clique em ➕ para adicionar. Pode adicionar vários serviços.</div>
+
+                <!-- Lista de itens adicionados -->
+                <div id="tecItensWrap" style="display:none; margin-top:10px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:#f0f4f8;">
+                                <th style="padding:7px 8px; text-align:left; border:1px solid #ddd;">Serviço</th>
+                                <th style="padding:7px 8px; text-align:center; border:1px solid #ddd; width:80px;">Qtd</th>
+                                <th style="padding:7px 8px; text-align:center; border:1px solid #ddd; width:50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tecItensBody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="form-group">
@@ -720,8 +737,52 @@ function abrirModalNovo() {
     document.getElementById('novoPrio').value = 'media';
     document.getElementById('novoCat').value = 'geral';
     document.getElementById('novoServico').value = '';
+    _tecItensForm = [];
+    renderizarTecItens();
     document.getElementById('modalNovo').classList.add('active');
 }
+let _tecItensForm = []; // [{servico_id, nome, quantidade}]
+
+function adicionarServicoTecnico() {
+    const sel = document.getElementById('novoServico');
+    const sid = parseInt(sel.value);
+    if (!sid) { mostrarErro('Selecione um serviço antes de adicionar'); return; }
+    const nome = sel.options[sel.selectedIndex].text;
+    const existente = _tecItensForm.find(i => i.servico_id === sid);
+    if (existente) {
+        existente.quantidade += 1;
+    } else {
+        _tecItensForm.push({ servico_id: sid, nome, quantidade: 1 });
+    }
+    sel.value = '';
+    renderizarTecItens();
+}
+
+function renderizarTecItens() {
+    const tbody = document.getElementById('tecItensBody');
+    const wrap = document.getElementById('tecItensWrap');
+    if (!tbody) return;
+    if (_tecItensForm.length === 0) {
+        wrap.style.display = 'none';
+        return;
+    }
+    wrap.style.display = 'block';
+    tbody.innerHTML = _tecItensForm.map((item, idx) => `
+        <tr>
+            <td style="padding:7px 8px; border:1px solid #ddd;">${escapeHTML(item.nome)}</td>
+            <td style="padding:7px 8px; border:1px solid #ddd; text-align:center;">
+                <input type="number" min="1" value="${item.quantidade}"
+                    style="width:55px; padding:3px; border:1px solid #ddd; border-radius:4px; text-align:center;"
+                    onchange="_tecItensForm[${idx}].quantidade = parseInt(this.value) || 1">
+            </td>
+            <td style="padding:7px 8px; border:1px solid #ddd; text-align:center;">
+                <button type="button" style="background:none; border:none; cursor:pointer; color:#e74c3c; font-size:15px;"
+                    onclick="_tecItensForm.splice(${idx},1); renderizarTecItens()">🗑</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
 async function criarChamado() {
     const cliente_id = parseInt(document.getElementById('novoCliente').value);
     const titulo = document.getElementById('novoTitulo').value.trim();
@@ -736,14 +797,22 @@ async function criarChamado() {
         tipo_servico: tipoChamadoAtual,
     };
 
-    // Se for suporte técnico: precisa de um serviço do catálogo
+    // Se for suporte técnico: envia lista de itens
     if (tipoChamadoAtual === 'suporte_tecnico') {
-        const sid = document.getElementById('novoServico').value;
-        if (!sid) {
-            mostrarErro('Selecione um serviço técnico do catálogo');
-            return;
+        if (_tecItensForm.length === 0) {
+            // Tenta usar o select se não tiver itens adicionados
+            const sid = document.getElementById('novoServico').value;
+            if (!sid) {
+                mostrarErro('Adicione ao menos um serviço técnico');
+                return;
+            }
+            payload.servico_id = parseInt(sid, 10);
+        } else {
+            payload.itens = _tecItensForm.map(i => ({
+                servico_id: i.servico_id,
+                quantidade: i.quantidade
+            }));
         }
-        payload.servico_id = parseInt(sid, 10);
     }
 
     try {
@@ -772,16 +841,43 @@ async function abrirDetalhe(chamadoId) {
 
         document.getElementById('detTitulo').textContent = `${c.numero} — ${c.titulo}`;
         const ehTec = c.tipo_servico === 'suporte_tecnico';
+
+        // Monta bloco de serviços técnicos
+        let servicosHtml = '';
+        if (ehTec) {
+            const itens = c.itens_servicos || [];
+            if (itens.length > 0) {
+                const linhas = itens.map(i => `
+                    <tr>
+                        <td style="padding:5px 8px; border:1px solid #e0e6ed;">${escapeHTML(i.servico_nome || '-')}</td>
+                        <td style="padding:5px 8px; border:1px solid #e0e6ed; text-align:center;">${i.quantidade} un</td>
+                    </tr>
+                `).join('');
+                servicosHtml = `
+                    <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:6px;">
+                        <thead>
+                            <tr style="background:#f0f4f8;">
+                                <th style="padding:5px 8px; text-align:left; border:1px solid #ddd;">Serviço</th>
+                                <th style="padding:5px 8px; text-align:center; border:1px solid #ddd; width:70px;">Qtd</th>
+                            </tr>
+                        </thead>
+                        <tbody>${linhas}</tbody>
+                    </table>`;
+            } else {
+                servicosHtml = `<span style="color:#aaa;">— serviço a definir —</span>`;
+            }
+        }
+
         const totalLabel = ehTec
-            ? `<strong>Total:</strong> 📦 ${c.tempo_gasto_minutos || 0} un`
+            ? `<strong>Serviços:</strong><br>${servicosHtml}`
             : `<strong>Tempo gasto:</strong> ${fmtMin(c.tempo_gasto_minutos)}`;
+
         document.getElementById('detInfo').innerHTML = `
             <strong>Cliente:</strong> ${escapeHTML(c.cliente_nome || '—')}<br>
             <strong>Descrição:</strong> ${escapeHTML(c.descricao)}<br>
             <strong>Status:</strong> ${statusBadge(c.status)} &nbsp;
             <strong>Prioridade:</strong> ${prioBadge(c.prioridade)}<br>
-            <strong>Tipo:</strong> ${ehTec ? '🔧 Técnico' : '⏱️ Por tempo'}
-            ${c.servico_tecnico_nome ? ' — ' + escapeHTML(c.servico_tecnico_nome) : ''}<br>
+            <strong>Tipo:</strong> ${ehTec ? '🔧 Técnico' : '⏱️ Por tempo'}<br>
             ${totalLabel}
             ${c.motivo_devolucao ? `<br><strong style="color:#c0392b;">⚠ Motivo da última devolução:</strong> ${escapeHTML(c.motivo_devolucao)}` : ''}
         `;

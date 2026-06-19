@@ -617,27 +617,6 @@ tr { cursor: pointer; }
                         <span>O valor do chamado será definido pelo administrador ao finalizar o atendimento. Até lá, fica zerado.</span>
                     </div>
                 </div>
-
-                <!-- LISTA DE ITENS ADICIONADOS -->
-                <div id="itensAdicionados" style="margin-top:12px; display:none;">
-                    <label style="font-weight:600; color:#333; font-size:13px; margin-bottom:6px; display:block;">📦 Serviços adicionados ao chamado:</label>
-                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
-                        <thead>
-                            <tr style="background:#f0f4f8;">
-                                <th style="padding:8px; text-align:left; border:1px solid #ddd;">Serviço</th>
-                                <th style="padding:8px; text-align:center; border:1px solid #ddd; width:80px;">Qtd</th>
-                                <th style="padding:8px; text-align:center; border:1px solid #ddd; width:60px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="itensAdicionadosBody"></tbody>
-                    </table>
-                </div>
-
-                <!-- BOTÃO ADICIONAR ITEM -->
-                <div id="btnAdicionarItemWrap" style="margin-top:10px; display:none;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="adicionarItemAoForm()">➕ Adicionar outro serviço</button>
-                </div>
-
             </div>
 
             <div class="form-grid">
@@ -884,30 +863,17 @@ function filtrarServicos() {
     abrirDropdownServicos();
 }
 
-// Lista de itens do form (novo fluxo multi-serviço)
-let _itensForm = []; // [{servico_id, nome, quantidade}]
-
 function selecionarServicoCombobox(id) {
     const s = servicosTecnicos.find(x => x.id === id);
     if (!s) return;
 
-    // Adiciona à lista de itens
-    const existente = _itensForm.find(i => i.servico_id === s.id);
-    if (existente) {
-        existente.quantidade += 1;
-    } else {
-        _itensForm.push({ servico_id: s.id, nome: s.nome, quantidade: 1 });
-    }
-    renderizarItensForm();
-
-    // Atualiza hidden legado com o primeiro item
-    document.getElementById('servico_id').value = _itensForm[0].servico_id;
+    document.getElementById('servico_id').value = s.id;
     document.getElementById('servico_tecnico').value = '';
     document.getElementById('servicoCustomNome').value = '';
 
-    // Mostra card de selecionado (primeiro item)
-    document.getElementById('servicoSelNome').textContent = _itensForm.map(i => i.nome).join(', ');
-    document.getElementById('servicoSelCat').textContent = _itensForm.length + ' serviço(s) selecionado(s)';
+    // Mostra card de selecionado
+    document.getElementById('servicoSelNome').textContent = s.nome;
+    document.getElementById('servicoSelCat').textContent = s.categoria;
     document.getElementById('servicoSelecionadoBox').style.display = 'flex';
 
     // Esconde combobox e personalizado
@@ -917,68 +883,13 @@ function selecionarServicoCombobox(id) {
     fecharDropdownServicos();
 }
 
-function renderizarItensForm() {
-    const tbody = document.getElementById('itensAdicionadosBody');
-    const wrap = document.getElementById('itensAdicionados');
-    const btnWrap = document.getElementById('btnAdicionarItemWrap');
-    if (!tbody) return;
-
-    if (_itensForm.length === 0) {
-        wrap.style.display = 'none';
-        btnWrap.style.display = 'none';
-        return;
-    }
-
-    wrap.style.display = 'block';
-    btnWrap.style.display = 'block';
-
-    tbody.innerHTML = _itensForm.map((item, idx) => `
-        <tr>
-            <td style="padding:8px; border:1px solid #ddd;">${escapeHTMLstr(item.nome)}</td>
-            <td style="padding:8px; border:1px solid #ddd; text-align:center;">
-                <input type="number" min="1" value="${item.quantidade}"
-                    style="width:60px; padding:4px; border:1px solid #ddd; border-radius:4px; text-align:center;"
-                    onchange="_itensForm[${idx}].quantidade = parseInt(this.value) || 1">
-            </td>
-            <td style="padding:8px; border:1px solid #ddd; text-align:center;">
-                <button type="button" style="background:none; border:none; cursor:pointer; color:#e74c3c; font-size:16px;"
-                    onclick="removerItemForm(${idx})">🗑</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function removerItemForm(idx) {
-    _itensForm.splice(idx, 1);
-    renderizarItensForm();
-    if (_itensForm.length === 0) {
-        // Volta para o combobox
-        document.getElementById('servico_id').value = '';
-        document.getElementById('servicoSelecionadoBox').style.display = 'none';
-        document.getElementById('comboxServicoWrap').style.display = '';
-    } else {
-        document.getElementById('servico_id').value = _itensForm[0].servico_id;
-    }
-}
-
-function adicionarItemAoForm() {
-    // Volta o combobox para selecionar mais um serviço
-    document.getElementById('servicoSelecionadoBox').style.display = 'none';
-    document.getElementById('comboxServicoWrap').style.display = '';
-    document.getElementById('comboxServicoInput').value = '';
-    renderizarDropdownServicos(servicosTecnicos);
-    document.getElementById('comboxServicoInput').focus();
-}
-
 function limparServicoSelecionado() {
-    _itensForm = [];
     document.getElementById('servico_id').value = '';
     document.getElementById('servico_tecnico').value = '';
     document.getElementById('servicoSelecionadoBox').style.display = 'none';
     document.getElementById('servicoCustomBox').style.display = 'none';
     document.getElementById('comboxServicoWrap').style.display = '';
     document.getElementById('comboxServicoInput').value = '';
-    renderizarItensForm();
     renderizarDropdownServicos(servicosTecnicos);
     document.getElementById('comboxServicoInput').focus();
 }
@@ -1105,11 +1016,7 @@ document.getElementById('formChamado').addEventListener('submit', async (e) => {
 
     // Só envia os campos de serviço se for suporte técnico
     if (tipoServico === 'suporte_tecnico') {
-        if (_itensForm.length > 0) {
-            // Novo fluxo: lista de itens
-            dados.itens = _itensForm.map(i => ({ servico_id: i.servico_id, quantidade: i.quantidade }));
-        } else if (servicoIdStr) {
-            // Legado: serviço único
+        if (servicoIdStr) {
             dados.servico_id = parseInt(servicoIdStr);
         } else if (servicoTextoLivre) {
             dados.servico_tecnico = servicoTextoLivre;
@@ -1118,8 +1025,8 @@ document.getElementById('formChamado').addEventListener('submit', async (e) => {
 
     if (!dados.titulo || !dados.descricao) { mostrarErro('Preencha título e descrição!'); return; }
     if (!dados.cliente_id) { mostrarErro('Selecione uma empresa!'); return; }
-    if (tipoServico === 'suporte_tecnico' && !dados.itens && !dados.servico_id && !dados.servico_tecnico) {
-        mostrarErro('Selecione ao menos um serviço técnico!');
+    if (tipoServico === 'suporte_tecnico' && !dados.servico_id && !dados.servico_tecnico) {
+        mostrarErro('Selecione um serviço técnico ou crie um personalizado!');
         return;
     }
 
@@ -1140,7 +1047,6 @@ document.getElementById('formChamado').addEventListener('submit', async (e) => {
 
 function cancelarEdicao() {
     editandoId = null;
-    _itensForm = [];
     document.getElementById('formChamado').reset();
     document.getElementById('formTitle').textContent = '➕ Novo Chamado';
     document.getElementById('btnSalvar').textContent = '✓ Abrir Chamado';
@@ -1321,7 +1227,26 @@ async function abrirDetalhe(id) {
                 const qtd = c.tempo_gasto_minutos || 0;
                 resumoFinanceiroHtml = `
                     <div class="resumo-financeiro">
-                        ${_buildResumoItensTecnico(c)}
+                        <div class="resumo-item">
+                            <div class="rf-label">Quantidade</div>
+                            <div class="rf-valor">${qtd} un</div>
+                            <div class="rf-sub">${c.historicos.length} registro${c.historicos.length !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="rf-label">Valor Unitário</div>
+                            <div class="rf-valor laranja">${formatarValor(c.valor_fixo)}</div>
+                            <div class="rf-sub">definido pelo admin</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="rf-label">Cálculo</div>
+                            <div class="rf-valor pequeno">Qtd × Valor<br>Unitário</div>
+                            <div class="rf-sub">serviço técnico</div>
+                        </div>
+                        <div class="resumo-item">
+                            <div class="rf-label">Valor Faturado</div>
+                            <div class="rf-valor verde">${formatarValor(c.valor_total)}</div>
+                            <div class="rf-sub">finalizado</div>
+                        </div>
                     </div>
                 `;
             } else {
@@ -2001,7 +1926,24 @@ function abrirModalFinalizarTecnico(chamadoId) {
                         </div>
                     </div>
 
-                    ${_buildTabelaItensFinalizacao(c)}
+                    <div class="calc-valor-box">
+                        <div class="calc-grid">
+                            <div>
+                                <label>Valor unitário (R$)</label>
+                                <input type="number" id="finValorUnitario" value="${valorSugerido.toFixed(2)}" step="0.01" min="0" oninput="atualizarCalcFinalizar()">
+                            </div>
+                            <div class="operador">×</div>
+                            <div>
+                                <label>Quantidade</label>
+                                <input type="number" id="finQuantidade" value="${qtdSugerida}" min="1" oninput="atualizarCalcFinalizar()">
+                            </div>
+                        </div>
+
+                        <div class="resultado">
+                            <div class="resultado-label">Valor total a faturar</div>
+                            <div class="resultado-valor" id="finResultado">${formatarValor(valorSugerido * qtdSugerida)}</div>
+                        </div>
+                    </div>
 
                     <div style="margin-top:18px; padding:14px; background:#f8f9fa; border-radius:6px; border-left:3px solid #3498db;">
                         <label style="display:block; font-weight:600; color:#333; margin-bottom:6px; font-size:13px;">📅 Data de finalização:</label>
@@ -2031,150 +1973,6 @@ function abrirModalFinalizarTecnico(chamadoId) {
     });
 }
 
-function _buildResumoItensTecnico(c) {
-    const itens = c.itens_servicos || [];
-    if (itens.length === 0) {
-        // Legado: sem itens
-        const qtd = c.tempo_gasto_minutos || 0;
-        return `
-            <div class="resumo-item">
-                <div class="rf-label">Quantidade</div>
-                <div class="rf-valor">${qtd} un</div>
-                <div class="rf-sub">${c.historicos.length} registro${c.historicos.length !== 1 ? 's' : ''}</div>
-            </div>
-            <div class="resumo-item">
-                <div class="rf-label">Valor Unitário</div>
-                <div class="rf-valor laranja">${formatarValor(c.valor_fixo)}</div>
-                <div class="rf-sub">definido pelo admin</div>
-            </div>
-            <div class="resumo-item">
-                <div class="rf-label">Cálculo</div>
-                <div class="rf-valor pequeno">Qtd × Valor<br>Unitário</div>
-                <div class="rf-sub">serviço técnico</div>
-            </div>
-            <div class="resumo-item">
-                <div class="rf-label">Valor Faturado</div>
-                <div class="rf-valor verde">${formatarValor(c.valor_total)}</div>
-                <div class="rf-sub">finalizado</div>
-            </div>`;
-    }
-
-    // Novo fluxo: lista de itens
-    const linhasHtml = itens.map(item => `
-        <tr>
-            <td style="padding:6px 8px; border:1px solid #e0e6ed;">${escapeHTMLstr(item.servico_nome || '-')}</td>
-            <td style="padding:6px 8px; border:1px solid #e0e6ed; text-align:center;">${item.quantidade} un</td>
-            <td style="padding:6px 8px; border:1px solid #e0e6ed; text-align:right;">${formatarValor(item.valor_unitario)}</td>
-            <td style="padding:6px 8px; border:1px solid #e0e6ed; text-align:right; font-weight:600; color:#27ae60;">${formatarValor(item.valor_total)}</td>
-        </tr>
-    `).join('');
-
-    return `
-        <div style="grid-column: span 4; width:100%;">
-            <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:8px;">
-                <thead>
-                    <tr style="background:#f0f4f8;">
-                        <th style="padding:7px 8px; text-align:left; border:1px solid #ddd;">Serviço</th>
-                        <th style="padding:7px 8px; text-align:center; border:1px solid #ddd; width:70px;">Qtd</th>
-                        <th style="padding:7px 8px; text-align:right; border:1px solid #ddd; width:110px;">Valor Unit.</th>
-                        <th style="padding:7px 8px; text-align:right; border:1px solid #ddd; width:110px;">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>${linhasHtml}</tbody>
-                <tfoot>
-                    <tr style="background:#eef2f7;">
-                        <td colspan="3" style="padding:7px 8px; border:1px solid #ddd; font-weight:700; text-align:right;">Total faturado:</td>
-                        <td style="padding:7px 8px; border:1px solid #ddd; font-weight:700; color:#27ae60; text-align:right;">${formatarValor(c.total_calculado || c.valor_total)}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>`;
-}
-
-function _buildTabelaItensFinalizacao(c) {
-    const itens = c.itens_servicos || [];
-    if (itens.length === 0) {
-        // Fluxo legado: sem itens, mostra campo único
-        const valorSugerido = c.servico_valor_padrao || 0;
-        const qtdSugerida = (c.tempo_gasto_minutos && c.tempo_gasto_minutos > 0) ? c.tempo_gasto_minutos : 1;
-        return `
-            <div class="calc-valor-box">
-                <div class="calc-grid">
-                    <div>
-                        <label>Valor unitário (R$)</label>
-                        <input type="number" id="finValorUnitario" value="${valorSugerido.toFixed(2)}" step="0.01" min="0" oninput="atualizarCalcFinalizar()">
-                    </div>
-                    <div class="operador">×</div>
-                    <div>
-                        <label>Quantidade</label>
-                        <input type="number" id="finQuantidade" value="${qtdSugerida}" min="1" oninput="atualizarCalcFinalizar()">
-                    </div>
-                </div>
-                <div class="resultado">
-                    <div class="resultado-label">Valor total a faturar</div>
-                    <div class="resultado-valor" id="finResultado">${formatarValor(valorSugerido * qtdSugerida)}</div>
-                </div>
-            </div>`;
-    }
-
-    // Novo fluxo: tabela com 1 linha por item
-    const linhas = itens.map(item => `
-        <tr data-item-id="${item.id}">
-            <td style="padding:8px; border:1px solid #ddd;">${escapeHTMLstr(item.servico_nome || '-')}</td>
-            <td style="padding:8px; border:1px solid #ddd; text-align:center;">
-                <input class="fin-qtd" type="number" min="1" value="${item.quantidade}"
-                    style="width:60px; padding:4px; border:1px solid #ddd; border-radius:4px; text-align:center;"
-                    oninput="atualizarTotalFinalizacao()">
-            </td>
-            <td style="padding:8px; border:1px solid #ddd; text-align:center;">
-                <input class="fin-valor" type="number" min="0" step="0.01" value="${(item.valor_unitario || 0).toFixed(2)}"
-                    style="width:90px; padding:4px; border:1px solid #ddd; border-radius:4px; text-align:right;"
-                    oninput="atualizarTotalFinalizacao()">
-            </td>
-            <td style="padding:8px; border:1px solid #ddd; text-align:right; font-weight:600; color:#27ae60;" id="subtotal_item_${item.id}">
-                ${formatarValor((item.valor_unitario || 0) * item.quantidade)}
-            </td>
-        </tr>
-    `).join('');
-
-    const totalAtual = itens.reduce((s, i) => s + (i.valor_unitario || 0) * i.quantidade, 0);
-
-    return `
-        <div style="margin-top:12px;">
-            <label style="font-weight:600; color:#333; font-size:13px; margin-bottom:6px; display:block;">💰 Ajuste os valores por serviço:</label>
-            <table id="tabelaItensFinalizacao" style="width:100%; border-collapse:collapse; font-size:13px;">
-                <thead>
-                    <tr style="background:#f0f4f8;">
-                        <th style="padding:8px; text-align:left; border:1px solid #ddd;">Serviço</th>
-                        <th style="padding:8px; text-align:center; border:1px solid #ddd; width:80px;">Qtd</th>
-                        <th style="padding:8px; text-align:center; border:1px solid #ddd; width:100px;">Valor Unit.</th>
-                        <th style="padding:8px; text-align:right; border:1px solid #ddd; width:110px;">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>${linhas}</tbody>
-            </table>
-            <div style="text-align:right; margin-top:8px; font-size:15px; font-weight:700; color:#1F3A5F;">
-                Total: <span id="finTotalGeral" style="color:#27ae60;">${formatarValor(totalAtual)}</span>
-            </div>
-        </div>`;
-}
-
-function atualizarTotalFinalizacao() {
-    let total = 0;
-    const linhas = document.querySelectorAll('#tabelaItensFinalizacao tbody tr');
-    for (const linha of linhas) {
-        const itemId = linha.dataset.itemId;
-        const valor = parseFloat(linha.querySelector('.fin-valor').value) || 0;
-        const qtd = parseInt(linha.querySelector('.fin-qtd').value) || 1;
-        const sub = valor * qtd;
-        total += sub;
-        const subEl = document.getElementById('subtotal_item_' + itemId);
-        if (subEl) subEl.textContent = formatarValor(sub);
-    }
-    const totalEl = document.getElementById('finTotalGeral');
-    if (totalEl) totalEl.textContent = formatarValor(total);
-}
-
 function fecharModalFinalizarTecnico() {
     const m = document.getElementById('modalFinalizarTecnico');
     if (m) m.remove();
@@ -2188,50 +1986,24 @@ function atualizarCalcFinalizar() {
 }
 
 async function confirmarFinalizarTecnico(chamadoId) {
+    const valor = parseFloat(document.getElementById('finValorUnitario').value) || 0;
+    const qtd = parseInt(document.getElementById('finQuantidade').value) || 0;
     const dataInput = document.getElementById('finDataTermino');
     const dataValor = dataInput ? dataInput.value : '';
+
+    if (valor < 0) { mostrarErro('Valor unitário não pode ser negativo'); return; }
+    if (qtd < 1) { mostrarErro('Quantidade precisa ser pelo menos 1'); return; }
     if (!dataValor) { mostrarErro('Informe a data de finalização'); return; }
 
-    const c = window._chamadoAtual;
-    const itens = (c && c.itens_servicos && c.itens_servicos.length > 0) ? c.itens_servicos : null;
-
-    let body = { data_termino: dataValor + 'T23:59:00' };
-
-    if (itens && itens.length > 0) {
-        // Novo fluxo: lê cada linha da tabela de itens
-        const linhas = document.querySelectorAll('#tabelaItensFinalizacao tbody tr');
-        const itensPayload = [];
-        let totalGeral = 0;
-
-        for (const linha of linhas) {
-            const itemId = parseInt(linha.dataset.itemId);
-            const valor = parseFloat(linha.querySelector('.fin-valor').value) || 0;
-            const qtd = parseInt(linha.querySelector('.fin-qtd').value) || 1;
-
-            if (valor < 0) { mostrarErro('Valor unitário não pode ser negativo'); return; }
-            if (qtd < 1) { mostrarErro('Quantidade precisa ser pelo menos 1'); return; }
-
-            totalGeral += valor * qtd;
-            itensPayload.push({ item_id: itemId, valor_unitario: valor, quantidade: qtd });
-        }
-
-        if (totalGeral === 0) {
-            if (!confirm('Valor total está zerado. Confirma finalizar com R$ 0,00?')) return;
-        }
-
-        body.itens = itensPayload;
-    } else {
-        // Fluxo legado
-        const valor = parseFloat(document.getElementById('finValorUnitario').value) || 0;
-        const qtd = parseInt(document.getElementById('finQuantidade').value) || 0;
-        if (valor < 0) { mostrarErro('Valor unitário não pode ser negativo'); return; }
-        if (qtd < 1) { mostrarErro('Quantidade precisa ser pelo menos 1'); return; }
-        if (valor === 0) {
-            if (!confirm('Valor unitário está zerado. Confirma finalizar com R$ 0,00?')) return;
-        }
-        body.valor_unitario = valor;
-        body.quantidade = qtd;
+    if (valor === 0) {
+        if (!confirm('Valor unitário está zerado. Confirma finalizar com R$ 0,00?')) return;
     }
+
+    const body = {
+        valor_unitario: valor,
+        quantidade: qtd,
+        data_termino: dataValor + 'T23:59:00'
+    };
 
     try {
         const res = await fetch(`/api/chamados/${chamadoId}/finalizar-tecnico`, {
