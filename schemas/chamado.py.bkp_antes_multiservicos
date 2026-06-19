@@ -1,61 +1,6 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, date, time
-
-
-# === ITEM DE SERVIÇO ===
-
-class ItemServicoCriar(BaseModel):
-    servico_id: int
-    quantidade: int = 1
-
-    @validator("quantidade")
-    def quantidade_positiva(cls, v):
-        if v < 1:
-            raise ValueError("Quantidade deve ser pelo menos 1")
-        return v
-
-
-class ItemServicoAtualizar(BaseModel):
-    servico_id: Optional[int] = None
-    quantidade: Optional[int] = None
-    valor_unitario: Optional[float] = None  # Admin pode sobrescrever na finalização
-
-
-class ItemServicoResposta(BaseModel):
-    id: int
-    chamado_id: int
-    servico_id: int
-    servico_nome: Optional[str] = None
-    quantidade: int
-    valor_unitario: float
-    valor_total: float
-    criado_em: Optional[datetime] = None
-
-    class Config:
-        orm_mode = True
-        from_attributes = True
-
-
-# === FINALIZAÇÃO TÉCNICO (nova: lista de itens) ===
-
-class ItemFinalizarTecnico(BaseModel):
-    """Item individual na finalização — admin pode sobrescrever valor e quantidade."""
-    item_id: int           # id em chamado_servicos
-    valor_unitario: float
-    quantidade: int
-
-    @validator("quantidade")
-    def quantidade_positiva(cls, v):
-        if v < 1:
-            raise ValueError("Quantidade deve ser pelo menos 1")
-        return v
-
-    @validator("valor_unitario")
-    def valor_nao_negativo(cls, v):
-        if v < 0:
-            raise ValueError("Valor unitário não pode ser negativo")
-        return v
 
 
 # === CHAMADO ===
@@ -66,12 +11,12 @@ class ChamadoCriar(BaseModel):
     categoria: str = "geral"
     prioridade: str = "media"
     cliente_id: Optional[int] = None
-    tipo_servico: str = "suporte_usuario"
+    tipo_servico: str = "suporte_usuario"  # "suporte_usuario" ou "suporte_tecnico"
 
-    # Suporte técnico: lista de itens (novo) OU campo legado (compatibilidade)
-    itens: Optional[List[ItemServicoCriar]] = None
-    servico_id: Optional[int] = None        # legado — 1 serviço
-    servico_tecnico: Optional[str] = None   # legado — texto livre
+    # Para suporte técnico: OU informa servico_id (escolheu do catálogo)
+    # OU servico_tecnico (nome livre para personalizado)
+    servico_id: Optional[int] = None
+    servico_tecnico: Optional[str] = None
 
 
 class ChamadoAtualizar(BaseModel):
@@ -123,9 +68,6 @@ class ChamadoResposta(BaseModel):
     data_inicio: Optional[datetime] = None
     data_termino: Optional[datetime] = None
     tempo_gasto_minutos: int = 0
-    valor_total: float = 0.0
-    itens_servicos: List[ItemServicoResposta] = []
-    total_calculado: float = 0.0
     criado_em: Optional[datetime] = None
     atualizado_em: Optional[datetime] = None
     historicos: List[HistoricoResposta] = []

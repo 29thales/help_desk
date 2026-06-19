@@ -7,22 +7,6 @@ from datetime import datetime
 from database import Base
 
 
-class ChamadoServico(Base):
-    """Item de serviço vinculado a um chamado técnico (N serviços por chamado)."""
-    __tablename__ = "chamado_servicos"
-
-    id = Column(Integer, primary_key=True, index=True)
-    chamado_id = Column(Integer, ForeignKey("chamados.id", ondelete="CASCADE"), nullable=False, index=True)
-    servico_id = Column(Integer, ForeignKey("servicos_tecnicos.id"), nullable=False)
-    quantidade = Column(Integer, default=1, nullable=False)
-    valor_unitario = Column(Float, default=0.0, nullable=False)
-    valor_total = Column(Float, default=0.0, nullable=False)
-    criado_em = Column(DateTime, default=datetime.now)
-
-    chamado = relationship("Chamado", back_populates="itens_servicos")
-    servico = relationship("ServicoTecnico")
-
-
 class Chamado(Base):
     __tablename__ = "chamados"
 
@@ -34,15 +18,17 @@ class Chamado(Base):
     prioridade = Column(String(20), default="media", nullable=False)
 
     # Status: 'aberto' | 'atribuido' | 'em_atendimento' | 'finalizado'
+    # 'atribuido' adicionado na Fase 1 (entre aberto e em_atendimento)
     status = Column(String(20), default="aberto", nullable=False)
 
     # Tipo de serviço: "suporte_usuario" ou "suporte_tecnico"
     tipo_servico = Column(String(30), default="suporte_usuario", nullable=False)
 
-    # ============ SERVIÇO TÉCNICO (mantidos para compatibilidade) ============
+    # ============ SERVIÇO TÉCNICO ============
     servico_id = Column(Integer, ForeignKey("servicos_tecnicos.id"), nullable=True)
     servico = relationship("ServicoTecnico")
 
+    # Mantido para compatibilidade com chamados antigos e serviços personalizados
     servico_tecnico = Column(String(150), nullable=True)
 
     valor_fixo = Column(Float, default=0.0, nullable=False)
@@ -75,6 +61,7 @@ class Chamado(Base):
         foreign_keys=[tecnico_id],
     )
 
+    # Motivo da última devolução (se houver). Texto livre.
     motivo_devolucao = Column(Text, nullable=True)
 
     criado_em = Column(DateTime, default=datetime.now, nullable=False)
@@ -94,21 +81,6 @@ class Chamado(Base):
         order_by="desc(ChamadoTransferencia.criado_em)",
     )
 
-    # ============ MÚLTIPLOS SERVIÇOS ============
-    itens_servicos = relationship(
-        "ChamadoServico",
-        back_populates="chamado",
-        cascade="all, delete-orphan",
-        order_by="ChamadoServico.id",
-    )
-
-    @property
-    def total_calculado(self):
-        """Soma dos itens para suporte_tecnico; valor_total para suporte_usuario."""
-        if self.tipo_servico == "suporte_tecnico" and self.itens_servicos:
-            return round(sum(i.valor_total for i in self.itens_servicos), 2)
-        return float(self.valor_total or 0)
-
     def __repr__(self):
         return f"<Chamado(id={self.id}, numero='{self.numero}', status='{self.status}', tecnico_id={self.tecnico_id})>"
 
@@ -123,6 +95,7 @@ class HistoricoChamado(Base):
     descricao = Column(Text, nullable=False)
     tempo_minutos = Column(Integer, default=0, nullable=False)
 
+    # Campos de data/hora real do atendimento
     data_atendimento = Column(DateTime, nullable=True)
     hora_inicio = Column(Time, nullable=True)
     hora_termino = Column(Time, nullable=True)
@@ -136,18 +109,31 @@ class HistoricoChamado(Base):
         return f"<HistoricoChamado(id={self.id}, chamado_id={self.chamado_id})>"
 
 
+# ============================================
+# FASE 1 - AUDITORIA DE TRANSFERÊNCIAS
+# ============================================
+
 class ChamadoTransferencia(Base):
+    """
+    Registro histórico de transferências de chamados entre técnicos.
+    Toda vez que admin/técnico transfere ou devolve um chamado,
+    grava uma linha aqui — para auditoria.
+    """
     __tablename__ = "chamado_transferencias"
 
     id = Column(Integer, primary_key=True, index=True)
     chamado_id = Column(Integer, ForeignKey("chamados.id"), nullable=False, index=True)
 
+    # Quem detinha antes (None se chamado estava aberto sem técnico)
     de_usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+
+    # Pra quem foi transferido (None se foi devolvido pra fila aberta)
     para_usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
 
     motivo = Column(Text, nullable=True)
     criado_em = Column(DateTime, default=datetime.now, nullable=False)
 
+    # Relacionamentos
     chamado = relationship("Chamado", back_populates="transferencias")
     de_usuario = relationship("Usuario", foreign_keys=[de_usuario_id])
     para_usuario = relationship("Usuario", foreign_keys=[para_usuario_id])
