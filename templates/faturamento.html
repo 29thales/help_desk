@@ -993,9 +993,12 @@ async function gerarPDFCliente(clienteId) {
         });
         if (!res.ok) { mostrarErro('Erro ao gerar PDF'); return; }
         const blob = await res.blob();
+        const contentDisposition = res.headers.get('content-disposition') || '';
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const filename = match ? match[1] : `faturamento_cliente_${clienteId}_${ano}_${mes}.pdf`;
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `faturamento_cliente_${clienteId}_${ano}_${mes}.pdf`;
+        link.download = filename;
         link.click();
     } catch (err) { mostrarErro('Erro: ' + err.message); }
 }

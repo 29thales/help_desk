@@ -129,11 +129,13 @@ class FaturamentoService:
                     else:
                         tempo_fmt = f"{h.tempo_minutos // 60}h {h.tempo_minutos % 60}min"
 
+            descricao_hist = (h.descricao or "").strip() or "-"
+
             resultado.append({
                 "data": data_fmt,
                 "hora_inicio": hora_ini,
                 "hora_termino": hora_fim,
-                "descricao": (h.descricao or "").strip() or "-",
+                "descricao": descricao_hist,
                 "tempo": tempo_fmt
             })
 
@@ -494,7 +496,7 @@ class FaturamentoService:
                 "data_atendimento": FaturamentoService._formatar_data(inicio),
                 "hora_inicio": FaturamentoService._formatar_hora(inicio),
                 "hora_termino": FaturamentoService._formatar_hora(termino),
-                "descricao_atendimento": c.descricao or c.titulo or "-",
+                "descricao_atendimento": c.titulo or c.descricao or "-",
                 "horas_atendimento": horas,
                 "unidades_atendimento": unidades,
                 "valor_total": float(c.valor_total or 0),
@@ -820,7 +822,19 @@ class FaturamentoService:
         elementos.append(Spacer(1, 2 * mm))
 
         if detalhe["chamados"]:
-            tabela_dados = [[
+            COL_WIDTHS = [
+                doc.width * 0.08,
+                doc.width * 0.08,
+                doc.width * 0.06,
+                doc.width * 0.06,
+                doc.width * 0.32,
+                doc.width * 0.14,
+                doc.width * 0.08,
+                doc.width * 0.07,
+                doc.width * 0.11
+            ]
+
+            CABECALHO = [
                 FaturamentoService._p("Chamado", styles["tabela_head"]),
                 FaturamentoService._p("Data", styles["tabela_head"]),
                 FaturamentoService._p("Início", styles["tabela_head"]),
@@ -830,16 +844,16 @@ class FaturamentoService:
                 FaturamentoService._p("Horas", styles["tabela_head"]),
                 FaturamentoService._p("Unid.", styles["tabela_head"]),
                 FaturamentoService._p("Valor", styles["tabela_head"]),
-            ]]
+            ]
 
-            # Rastreamento de linhas
-            linhas_historico = []   # linhas que são históricos
-            linhas_subtotal = []    # linhas de subtotal
-            linha_atual = 1         # 0 é o cabeçalho
-
+            # Uma mini-tabela por chamado — permite quebra de página entre chamados
             for c in detalhe["chamados"]:
+                dados_bloco = [CABECALHO]
+                linhas_hist_bloco = []
+                linha_atual = 1
+
                 # Linha principal do chamado
-                tabela_dados.append([
+                dados_bloco.append([
                     FaturamentoService._p(str(c["numero"]), styles["tabela_centro"]),
                     FaturamentoService._p(c["data_atendimento"], styles["tabela_centro"]),
                     FaturamentoService._p(c["hora_inicio"], styles["tabela_centro"]),
@@ -855,30 +869,32 @@ class FaturamentoService:
                 ])
                 linha_atual += 1
 
-                # Linhas de histórico (descrição CENTRALIZADA)
+                # Linhas de histórico
                 historicos = c.get("historicos") or []
                 for h in historicos:
-                    # Monta descrição centralizada + tempo em verde com bullet
-                    descricao = h["descricao"]
+                    descricao_raw = h["descricao"]
+                    if len(descricao_raw) > 600:
+                        descricao_raw = descricao_raw[:597] + "..."
+                    descricao = descricao_raw
                     if h.get("tempo"):
                         descricao += f' <font size="7" color="{FaturamentoService.COR_VERDE}"><b>• {h["tempo"]}</b></font>'
-
-                    tabela_dados.append([
-                        FaturamentoService._p("", styles["tabela_centro"]),  # Chamado vazio
+                    dados_bloco.append([
+                        FaturamentoService._p("", styles["tabela_centro"]),
                         FaturamentoService._p(h["data"], styles["historico_centro_muted"]),
                         FaturamentoService._p(h.get("hora_inicio") or "—", styles["historico_centro_muted"]),
                         FaturamentoService._p(h.get("hora_termino") or "—", styles["historico_centro_muted"]),
-                        FaturamentoService._p(descricao, styles["historico_descricao"]),  # CENTRALIZADA
+                        FaturamentoService._p(descricao, styles["historico_descricao"]),
                         FaturamentoService._p("", styles["tabela"]),
                         FaturamentoService._p("", styles["tabela_centro"]),
                         FaturamentoService._p("", styles["tabela_centro"]),
                         FaturamentoService._p("", styles["tabela_direita"]),
                     ])
-                    linhas_historico.append(linha_atual)
+                    linhas_hist_bloco.append(linha_atual)
                     linha_atual += 1
 
-                # Linha de SUBTOTAL do chamado (fecha o bloco com valor consolidado)
-                tabela_dados.append([
+                # Linha de subtotal
+                linha_subtotal = linha_atual
+                dados_bloco.append([
                     "", "", "", "", "", "", "",
                     FaturamentoService._p(f"Subtotal {c['numero']}:", styles["subtotal_label"]),
                     FaturamentoService._p(
@@ -886,54 +902,39 @@ class FaturamentoService:
                         styles["subtotal_valor"]
                     ),
                 ])
-                linhas_subtotal.append(linha_atual)
-                linha_atual += 1
 
-            tabela = Table(
-                tabela_dados,
-                repeatRows=1,
-                colWidths=[
-                    doc.width * 0.08,
-                    doc.width * 0.08,
-                    doc.width * 0.06,
-                    doc.width * 0.06,
-                    doc.width * 0.32,
-                    doc.width * 0.14,
-                    doc.width * 0.08,
-                    doc.width * 0.07,
-                    doc.width * 0.11
+                estilo_bloco = [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(FaturamentoService.COR_PRIMARIA)),
+                    ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor(FaturamentoService.COR_BORDA)),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.35, colors.HexColor(FaturamentoService.COR_BORDA)),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
                 ]
-            )
 
-            estilo_tabela = [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(FaturamentoService.COR_PRIMARIA)),
-                ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor(FaturamentoService.COR_BORDA)),
-                ("INNERGRID", (0, 0), (-1, -1), 0.35, colors.HexColor(FaturamentoService.COR_BORDA)),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 5),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-            ]
+                for ln in linhas_hist_bloco:
+                    estilo_bloco.append(("BACKGROUND", (0, ln), (-1, ln), colors.HexColor(FaturamentoService.COR_HIST_FUNDO)))
+                    estilo_bloco.append(("TOPPADDING", (0, ln), (-1, ln), 4))
+                    estilo_bloco.append(("BOTTOMPADDING", (0, ln), (-1, ln), 4))
 
-            # Histórico: fundo sutilmente diferenciado, padding reduzido
-            for linha in linhas_historico:
-                estilo_tabela.append(("BACKGROUND", (0, linha), (-1, linha), colors.HexColor(FaturamentoService.COR_HIST_FUNDO)))
-                estilo_tabela.append(("TOPPADDING", (0, linha), (-1, linha), 4))
-                estilo_tabela.append(("BOTTOMPADDING", (0, linha), (-1, linha), 4))
+                estilo_bloco.append(("BACKGROUND", (0, linha_subtotal), (-1, linha_subtotal), colors.HexColor(FaturamentoService.COR_SUBTOTAL_FUNDO)))
+                estilo_bloco.append(("SPAN", (0, linha_subtotal), (6, linha_subtotal)))
+                estilo_bloco.append(("LINEABOVE", (0, linha_subtotal), (-1, linha_subtotal), 0.8, colors.HexColor(FaturamentoService.COR_BORDA)))
+                estilo_bloco.append(("LINEBELOW", (0, linha_subtotal), (-1, linha_subtotal), 1.2, colors.HexColor(FaturamentoService.COR_PRIMARIA)))
+                estilo_bloco.append(("TOPPADDING", (0, linha_subtotal), (-1, linha_subtotal), 6))
+                estilo_bloco.append(("BOTTOMPADDING", (0, linha_subtotal), (-1, linha_subtotal), 6))
 
-            # Subtotal: fundo azul-claro + SPAN pra esticar colunas 0-6 + borda grossa embaixo
-            for linha in linhas_subtotal:
-                estilo_tabela.append(("BACKGROUND", (0, linha), (-1, linha), colors.HexColor(FaturamentoService.COR_SUBTOTAL_FUNDO)))
-                estilo_tabela.append(("SPAN", (0, linha), (6, linha)))  # Colunas 0-6 viram uma só (vazia)
-                estilo_tabela.append(("LINEABOVE", (0, linha), (-1, linha), 0.8, colors.HexColor(FaturamentoService.COR_BORDA)))
-                estilo_tabela.append(("LINEBELOW", (0, linha), (-1, linha), 1.2, colors.HexColor(FaturamentoService.COR_PRIMARIA)))
-                estilo_tabela.append(("TOPPADDING", (0, linha), (-1, linha), 6))
-                estilo_tabela.append(("BOTTOMPADDING", (0, linha), (-1, linha), 6))
-
-            tabela.setStyle(TableStyle(estilo_tabela))
-
-            elementos.append(tabela)
+                tabela_bloco = Table(
+                    dados_bloco,
+                    repeatRows=1,
+                    splitByRow=1,
+                    colWidths=COL_WIDTHS
+                )
+                tabela_bloco.setStyle(TableStyle(estilo_bloco))
+                elementos.append(tabela_bloco)
+                elementos.append(Spacer(1, 3 * mm))
         else:
             sem_dados = Table(
                 [[FaturamentoService._p(
@@ -1087,5 +1088,5 @@ class FaturamentoService:
         return FileResponse(
             temp.name,
             media_type="application/pdf",
-            filename=f"relatorio_cliente_{cliente_id}_{ano}_{mes:02d}.pdf"
+            filename=f"faturamento_{(detalhe['empresa'] or detalhe['nome'] or str(cliente_id)).replace(' ', '_')}_{datetime.now().strftime('%d%m%Y')}.pdf"
         )
